@@ -1,0 +1,5 @@
+.idea/*
+build/*
+src/cmake-build-debug/*
+src/cmdline.c
+src/cmdline.h
