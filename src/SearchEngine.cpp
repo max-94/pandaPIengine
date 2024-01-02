@@ -36,6 +36,7 @@
 #include "heuristics/rcHeuristics/RCModelFactory.h"
 #include "heuristics/landmarks/lmExtraction/LmFdConnector.h"
 #include "heuristics/landmarks/hhLMCount.h"
+#include "heuristics/abstractionHeuristics/hhVariableRestriction.h"
 #ifndef CMAKE_NO_ILP
 #include "heuristics/dofHeuristics/hhStatisticsCollector.h"
 #endif
@@ -296,8 +297,10 @@ int main(int argc, char *argv[]) {
 			}
 			heuristics_so_far[{hName, args}] = i;
 
-			if (hName == "zero"){
-    			heuristics[i] = new hhZero(htn, i);
+			if (hName == "zero") {
+                heuristics[i] = new hhZero(htn, i);
+            } else if (hName == "variableRestriction") {
+                heuristics[i] = new hhVariableRestriction(htn, i);
 			} else if (hName == "modDepth"){
 				string invertString = (args.count("invert"))?args["invert"]:args["arg1"];
 				bool invert = false;

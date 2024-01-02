@@ -5,7 +5,7 @@ if (CPLEX_SOURCE_DIR)
 	add_subdirectory(dofHeuristics)
 endif (CPLEX_SOURCE_DIR)
 
-file(GLOB heuristics_SRC "*.h" "*.cpp")
+file(GLOB heuristics_SRC "*.h" "*.cpp" "./abstractionHeuristics/hhVariableRestriction.h" "./abstractionHeuristics/hhVariableRestriction.cpp")
 
 add_library(heuristics ${heuristics_SRC})
 target_compile_options(heuristics PUBLIC ${compiler_flags})
