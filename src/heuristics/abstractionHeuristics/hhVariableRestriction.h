@@ -8,6 +8,9 @@ namespace progression {
 
 class hhVariableRestriction : public Heuristic {
 public:
+    Model* restrictedModel;
+    vector<int> pattern;
+
     hhVariableRestriction(Model* htn, int index);
     virtual ~hhVariableRestriction();
     string getDescription() override;
