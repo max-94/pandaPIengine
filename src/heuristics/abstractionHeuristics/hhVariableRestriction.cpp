@@ -10,16 +10,17 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(
 
     // TODO: Prüfen, ob noch weitere Properties gesetzt werden bevor die read Methoden aufgerufen werden.
 
-    // Assuming that variables in pattern do exist! Should be verified to prevent errors...
+    // Assuming that facts in pattern do exist! Should be verified to prevent errors...
     // TODO: Simulate reading problem from readClassical and readHierarchy. Computation
     //       beyond reading can be copied from these methods.
 
     // We have to keep the mapping from original variable id to new id in restricted model.
     // Required to compute action's precondition, add and delete lists.
+    // TODO: Clarify if these local properties should be class properties?
     map<int, int> factOrigToRestrictedMapping;
     map<int, int> mutexOrigToRestrictedMapping;
 
-    // Prepare variables and its names.
+    // Process facts. Removing all facts that are not part of the given pattern.
     restrictedModel->numStateBits = static_cast<int>(pattern.size());
     restrictedModel->factStrs = new string[restrictedModel->numStateBits];
     for (int i = 0; i < restrictedModel->numStateBits; i++) {
@@ -27,7 +28,7 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(
         restrictedModel->factStrs[i] = htn->factStrs[pattern[i]];
     }
 
-    // Prepare mutex groups.
+    // Process mutex groups. Only keep those groups that contains at least one fact from the pattern.
     // TODO: Ist dieser Abschnitt überhaupt relevant für uns? Oder könnte man den Teil auch einfach weglassen?
     map<int, vector<int>> groupToFactMapping;
     for (int i = 0; i < restrictedModel->numStateBits; i++) {
@@ -53,9 +54,94 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(
         it++;
         counter++;
     }
-    // TODO: Überlegen wie man mit den strikten Mutexes umgeht.
+    // TODO: Überlegen wie man mit den strikten Mutexes umgeht. Zeilen 1582 bis 1602.
 
-    // TODO: Prepare actions including precs, add, del. We also have to consider conditional effects.
+    // Restrict primitive actions to only include facts from the given pattern. Actions can become empty. Empty actions
+    // are not removed from the model! Conditional effects are not considered at the moment, because planer is not using
+    // them at all!
+
+    // Initializing base data structures.
+    restrictedModel->numActions = htn->numActions;
+    restrictedModel->actionCosts = new int[restrictedModel->numActions];
+    restrictedModel->numPrecs = new int[restrictedModel->numActions];
+    restrictedModel->precLists = new int*[restrictedModel->numActions];
+    restrictedModel->numAdds = new int[restrictedModel->numActions];
+    restrictedModel->addLists = new int*[restrictedModel->numActions];
+    restrictedModel->numDels = new int[restrictedModel->numActions];
+    restrictedModel->delLists = new int*[restrictedModel->numActions];
+
+    // TODO: Falls conditional effects betrachtet werden, dann muss die Definition hier noch rein.
+    //       Befindet sich auch in conditional_effects_restriction_save.txt.
+
+    for (int i = 0; i < restrictedModel->numActions; i++) {
+        restrictedModel->actionCosts[i] = htn->actionCosts[i];
+
+        // Process preconditions.
+        vector<int> tmpPrecList;
+        for (int j = 0; j < htn->numPrecs[i]; j++) {
+            int element = htn->precLists[i][j];
+            if (std::find(pattern.begin(), pattern.end(), element) != pattern.end()) {
+                tmpPrecList.push_back(element);
+            }
+        }
+        int precListSize = static_cast<int>(tmpPrecList.size());
+        restrictedModel->numPrecs[i] = precListSize;
+        if (precListSize == 0) {
+            restrictedModel->precLists[i] = nullptr;
+            restrictedModel->numPrecLessActions++;
+        } else {
+            restrictedModel->precLists[i] = new int[precListSize];
+            for (int j = 0; j < precListSize; j++) {
+                restrictedModel->precLists[i][j] = factOrigToRestrictedMapping[tmpPrecList[j]];
+            }
+        }
+        vector<int>().swap(tmpPrecList);
+
+        // Process add effects.
+        vector<int> tmpAddList;
+        for (int j = 0; j < htn->numAdds[i]; j++) {
+            int element = htn->addLists[i][j];
+            if (std::find(pattern.begin(), pattern.end(), element) != pattern.end()) {
+                tmpAddList.push_back(element);
+            }
+        }
+        int addListSize = static_cast<int>(tmpAddList.size());
+        restrictedModel->numAdds[i] = addListSize;
+        if (addListSize == 0) {
+            restrictedModel->addLists[i] = nullptr;
+        } else {
+            restrictedModel->addLists[i] = new int[addListSize];
+            for (int j = 0; j < addListSize; j++) {
+                restrictedModel->addLists[i][j] = factOrigToRestrictedMapping[tmpAddList[j]];
+            }
+        }
+        vector<int>().swap(tmpAddList);
+
+        // Process delete effects.
+        vector<int> tmpDelList;
+        for (int j = 0; j < htn->numDels[i]; j++) {
+            int element = htn->delLists[i][j];
+            if (std::find(pattern.begin(), pattern.end(), element) != pattern.end()) {
+                tmpDelList.push_back(element);
+            }
+        }
+        int delListSize = static_cast<int>(tmpDelList.size());
+        restrictedModel->numDels[i] = delListSize;
+        if (delListSize == 0) {
+            restrictedModel->delLists[i] = nullptr;
+        } else {
+            restrictedModel->delLists[i] = new int[delListSize];
+            for (int j = 0; j < delListSize; j++) {
+                restrictedModel->delLists[i][j] = factOrigToRestrictedMapping[tmpDelList[j]];
+            }
+        }
+        vector<int>().swap(tmpDelList);
+
+        // TODO: Klären, ob auch conditional effects betrachtet werden müssen. Die Properties werden zwar deklariert und
+        //       definiert, werden aber sonst nicht weiter verwendet.
+        //       Bisheriger Code wurde ausgelagert in DESKTOP - conditional_effects_restriction_save.txt (lokal).
+
+    }
 
     // Initial state and task network should remain empty. Will be set during search.
     // TODO: Können wir das Modell wiederverwenden bei jedem Suchknoten?
