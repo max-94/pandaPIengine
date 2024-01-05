@@ -16,6 +16,14 @@ public:
     string getDescription() override;
     void setHeuristicValue(searchNode *n, searchNode *parent, int action) override;
     void setHeuristicValue(searchNode *n, searchNode *parent, int absTask, int method) override;
+
+private:
+    // We have to keep the mapping from original variable id to new id in restricted model.
+    // Required to compute action's precondition, add and delete lists.
+    map<int, int> factOrigToRestrictedMapping;
+    map<int, int> mutexOrigToRestrictedMapping;
+
+    void filterFactsWithPattern(int actionId, int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists);
 };
 
 } /* namespace progression */

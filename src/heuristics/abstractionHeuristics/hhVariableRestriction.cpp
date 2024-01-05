@@ -14,11 +14,10 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(
     // TODO: Simulate reading problem from readClassical and readHierarchy. Computation
     //       beyond reading can be copied from these methods.
 
-    // We have to keep the mapping from original variable id to new id in restricted model.
-    // Required to compute action's precondition, add and delete lists.
+
     // TODO: Clarify if these local properties should be class properties?
-    map<int, int> factOrigToRestrictedMapping;
-    map<int, int> mutexOrigToRestrictedMapping;
+    //map<int, int> factOrigToRestrictedMapping;
+    //map<int, int> mutexOrigToRestrictedMapping;
 
     // Process facts. Removing all facts that are not part of the given pattern.
     restrictedModel->numStateBits = static_cast<int>(pattern.size());
@@ -75,67 +74,13 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(
 
     for (int i = 0; i < restrictedModel->numActions; i++) {
         restrictedModel->actionCosts[i] = htn->actionCosts[i];
+        filterFactsWithPattern(i, htn->numPrecs, htn->precLists, restrictedModel->numPrecs, restrictedModel->precLists);
+        filterFactsWithPattern(i, htn->numAdds, htn->addLists, restrictedModel->numAdds, restrictedModel->addLists);
+        filterFactsWithPattern(i, htn->numDels, htn->delLists, restrictedModel->numDels, restrictedModel->delLists);
 
-        // Process preconditions.
-        vector<int> tmpPrecList;
-        for (int j = 0; j < htn->numPrecs[i]; j++) {
-            int element = htn->precLists[i][j];
-            if (std::find(pattern.begin(), pattern.end(), element) != pattern.end()) {
-                tmpPrecList.push_back(element);
-            }
-        }
-        int precListSize = static_cast<int>(tmpPrecList.size());
-        restrictedModel->numPrecs[i] = precListSize;
-        if (precListSize == 0) {
-            restrictedModel->precLists[i] = nullptr;
+        if (restrictedModel->numPrecs[i] == 0) {
             restrictedModel->numPrecLessActions++;
-        } else {
-            restrictedModel->precLists[i] = new int[precListSize];
-            for (int j = 0; j < precListSize; j++) {
-                restrictedModel->precLists[i][j] = factOrigToRestrictedMapping[tmpPrecList[j]];
-            }
         }
-        vector<int>().swap(tmpPrecList);
-
-        // Process add effects.
-        vector<int> tmpAddList;
-        for (int j = 0; j < htn->numAdds[i]; j++) {
-            int element = htn->addLists[i][j];
-            if (std::find(pattern.begin(), pattern.end(), element) != pattern.end()) {
-                tmpAddList.push_back(element);
-            }
-        }
-        int addListSize = static_cast<int>(tmpAddList.size());
-        restrictedModel->numAdds[i] = addListSize;
-        if (addListSize == 0) {
-            restrictedModel->addLists[i] = nullptr;
-        } else {
-            restrictedModel->addLists[i] = new int[addListSize];
-            for (int j = 0; j < addListSize; j++) {
-                restrictedModel->addLists[i][j] = factOrigToRestrictedMapping[tmpAddList[j]];
-            }
-        }
-        vector<int>().swap(tmpAddList);
-
-        // Process delete effects.
-        vector<int> tmpDelList;
-        for (int j = 0; j < htn->numDels[i]; j++) {
-            int element = htn->delLists[i][j];
-            if (std::find(pattern.begin(), pattern.end(), element) != pattern.end()) {
-                tmpDelList.push_back(element);
-            }
-        }
-        int delListSize = static_cast<int>(tmpDelList.size());
-        restrictedModel->numDels[i] = delListSize;
-        if (delListSize == 0) {
-            restrictedModel->delLists[i] = nullptr;
-        } else {
-            restrictedModel->delLists[i] = new int[delListSize];
-            for (int j = 0; j < delListSize; j++) {
-                restrictedModel->delLists[i][j] = factOrigToRestrictedMapping[tmpDelList[j]];
-            }
-        }
-        vector<int>().swap(tmpDelList);
 
         // TODO: Klären, ob auch conditional effects betrachtet werden müssen. Die Properties werden zwar deklariert und
         //       definiert, werden aber sonst nicht weiter verwendet.
@@ -176,6 +121,29 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
     cout << "Compute value for compound task." << endl;
     n->heuristicValue[index] = 0;
     n->goalReachable = true;
+}
+
+void hhVariableRestriction::filterFactsWithPattern(
+    const int actionId, int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists
+) {
+    vector<int> tmpList;
+    for (int j = 0; j < htnNumList[actionId]; j++) {
+        int element = htnFactLists[actionId][j];
+        if (std::find(pattern.begin(), pattern.end(), element) != pattern.end()) {
+            tmpList.push_back(element);
+        }
+    }
+    int delListSize = static_cast<int>(tmpList.size());
+    restrictedNumList[actionId] = delListSize;
+    if (delListSize == 0) {
+        restrictedFactLists[actionId] = nullptr;
+    } else {
+        restrictedFactLists[actionId] = new int[delListSize];
+        for (int j = 0; j < delListSize; j++) {
+            restrictedFactLists[actionId][j] = factOrigToRestrictedMapping[tmpList[j]];
+        }
+    }
+    vector<int>().swap(tmpList);
 }
 
 }
