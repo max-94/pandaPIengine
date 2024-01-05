@@ -1666,90 +1666,13 @@ newlyReachedMLMs = new noDelIntSet();
 #endif
 		}
 
-		// determine set of actions that have no precondition
-		if (numPrecLessActions > 0) {
-			int cur = 0;
-			precLessActions = new int[numPrecLessActions];
-			for (int i = 0; i < numActions; i++) {
-				if (numPrecs[i] == 0) {
-					precLessActions[cur++] = i;
-				}
-			}
-			assert(cur == numPrecLessActions);
-		} else {
-			precLessActions = nullptr;
-		}
+        calcPrecLessActionSet();
+        removeDuplicatedPrecsInActions();
 
-		for (int i = 0; i < numActions; i++) {
-			set<int> intSet;
-			for (int j = 0; j < numPrecs[i]; j++) {
-				assert(precLists[i][j] < numStateBits);
-				intSet.insert(precLists[i][j]);
-			}
-			int intSize = intSet.size();
-			if (intSize < numPrecs[i]) {
-				cout
-					<< "Action #" << i << " prec/add/del-definition contains same state feature twice"
-					<< endl;
-#ifndef NDEBUG
-				cout << "Original:";
-				for (int j = 0; j < numPrecs[i]; j++) cout << " " << precLists[i][j];
-				cout << endl;
-#endif
-				numPrecs[i] = intSet.size();
-				delete[] precLists[i];
-				precLists[i] = new int[numPrecs[i]];
-				int cur = 0;
-				for (int p : intSet) {
-					precLists[i][cur++] = p;
-				}
-				assert(cur == intSize);
-			}
-		}
-
-		set<int> *precToActionTemp = new set<int>[numStateBits];
-		for (int i = 0; i < numActions; i++) {
-			for (int j = 0; j < numPrecs[i]; j++) {
-				int f = precLists[i][j];
-				precToActionTemp[f].insert(i);
-			}
-		}
-		precToActionSize = new int[numStateBits];
-		precToAction = new int *[numStateBits];
-
-		for (int i = 0; i < numStateBits; i++) {
-			precToActionSize[i] = precToActionTemp[i].size();
-			precToAction[i] = new int[precToActionSize[i]];
-			int cur = 0;
-			for (int ac : precToActionTemp[i]) {
-				precToAction[i][cur++] = ac;
-			}
-		}
-		delete[] precToActionTemp;
-
-		// add to action
+		// Creating mappings to link precondition facts, add and delete effects with primitive actions.
+        calcPrecToActionMapping();
         calcAddToActionMapping();
-
-        // del to action
-		set<int> * delToActionTemp = new set<int>[numStateBits];
-		for (int i = 0; i < numActions; i++) {
-			for (int j = 0; j < numDels[i]; j++) {
-				int f = delLists[i][j];
-				delToActionTemp[f].insert(i);
-			}
-		}
-		delToActionSize = new int[numStateBits];
-		delToAction = new int*[numStateBits];
-
-		for (int i = 0; i < numStateBits; i++) {
-			delToActionSize[i] = delToActionTemp[i].size();
-			delToAction[i] = new int[delToActionSize[i]];
-			int cur = 0;
-			for (int ac : delToActionTemp[i]) {
-				delToAction[i][cur++] = ac;
-			}
-		}
-		delete[] delToActionTemp;
+        calcDelToActionMapping();
 
 		// s0
 		getline(domainFile, line);
@@ -1796,28 +1719,6 @@ newlyReachedMLMs = new noDelIntSet();
 			delete sStream;
 		}
 	}
-
-    void Model::calcAddToActionMapping() {
-        set<int> *addToActionTemp = new set<int>[numStateBits];
-        for (int i = 0; i < numActions; i++) {
-            for (int j = 0; j < numAdds[i]; j++) {
-                int f = addLists[i][j];
-                addToActionTemp[f].insert(i);
-            }
-        }
-        addToActionSize = new int[numStateBits];
-        addToAction = new int*[numStateBits];
-
-        for (int i = 0; i < numStateBits; i++) {
-            addToActionSize[i] = addToActionTemp[i].size();
-            addToAction[i] = new int[addToActionSize[i]];
-            int cur = 0;
-            for (int ac : addToActionTemp[i]) {
-                addToAction[i][cur++] = ac;
-            }
-        }
-        delete[] addToActionTemp;
-    }
 
     void Model::readHierarchical(istream &domainFile) {
 		stringstream *sStream;
@@ -2052,6 +1953,116 @@ newlyReachedMLMs = new noDelIntSet();
 			this->sortedDistinctSubtaskCount[m] = stcount;
 		}
 	}
+
+    void Model::calcPrecLessActionSet() {
+        if (numPrecLessActions > 0) {
+            int cur = 0;
+            precLessActions = new int[numPrecLessActions];
+            for (int i = 0; i < numActions; i++) {
+                if (numPrecs[i] == 0) {
+                    precLessActions[cur++] = i;
+                }
+            }
+            assert(cur == numPrecLessActions);
+        } else {
+            precLessActions = nullptr;
+        }
+    }
+
+    void Model::removeDuplicatedPrecsInActions() {
+        for (int i = 0; i < numActions; i++) {
+            set<int> intSet;
+            for (int j = 0; j < numPrecs[i]; j++) {
+                assert(precLists[i][j] < numStateBits);
+                intSet.insert(precLists[i][j]);
+            }
+            int intSize = intSet.size();
+            if (intSize < numPrecs[i]) {
+                cout << "Action #" << i << " prec/add/del-definition contains same state feature twice" << endl;
+
+#ifndef NDEBUG
+                cout << "Original:";
+                for (int j = 0; j < numPrecs[i]; j++) cout << " " << precLists[i][j];
+                cout << endl;
+#endif
+
+                numPrecs[i] = intSet.size();
+                delete[] precLists[i];
+                precLists[i] = new int[numPrecs[i]];
+                int cur = 0;
+                for (int p : intSet) {
+                    precLists[i][cur++] = p;
+                }
+                assert(cur == intSize);
+            }
+        }
+    }
+
+    void Model::calcPrecToActionMapping() {
+        auto *precToActionTemp = new set<int>[numStateBits];
+        for (int i = 0; i < numActions; i++) {
+            for (int j = 0; j < numPrecs[i]; j++) {
+                int f = precLists[i][j];
+                precToActionTemp[f].insert(i);
+            }
+        }
+        precToActionSize = new int[numStateBits];
+        precToAction = new int *[numStateBits];
+
+        for (int i = 0; i < numStateBits; i++) {
+            precToActionSize[i] = precToActionTemp[i].size();
+            precToAction[i] = new int[precToActionSize[i]];
+            int cur = 0;
+            for (int ac : precToActionTemp[i]) {
+                precToAction[i][cur++] = ac;
+            }
+        }
+        delete[] precToActionTemp;
+    }
+
+    void Model::calcAddToActionMapping() {
+        auto *addToActionTemp = new set<int>[numStateBits];
+        for (int i = 0; i < numActions; i++) {
+            for (int j = 0; j < numAdds[i]; j++) {
+                int f = addLists[i][j];
+                addToActionTemp[f].insert(i);
+            }
+        }
+        addToActionSize = new int[numStateBits];
+        addToAction = new int*[numStateBits];
+
+        for (int i = 0; i < numStateBits; i++) {
+            addToActionSize[i] = addToActionTemp[i].size();
+            addToAction[i] = new int[addToActionSize[i]];
+            int cur = 0;
+            for (int ac : addToActionTemp[i]) {
+                addToAction[i][cur++] = ac;
+            }
+        }
+        delete[] addToActionTemp;
+    }
+
+    void Model::calcDelToActionMapping() {
+        auto * delToActionTemp = new set<int>[numStateBits];
+        for (int i = 0; i < numActions; i++) {
+            for (int j = 0; j < numDels[i]; j++) {
+                int f = delLists[i][j];
+                delToActionTemp[f].insert(i);
+            }
+        }
+        delToActionSize = new int[numStateBits];
+        delToAction = new int*[numStateBits];
+
+        for (int i = 0; i < numStateBits; i++) {
+            delToActionSize[i] = delToActionTemp[i].size();
+            delToAction[i] = new int[delToActionSize[i]];
+            int cur = 0;
+            for (int ac : delToActionTemp[i]) {
+                delToAction[i][cur++] = ac;
+            }
+        }
+        delete[] delToActionTemp;
+    }
 
     void Model::generateVectorRepresentation() {
         addVectors = new bool *[numActions];

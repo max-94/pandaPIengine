@@ -251,8 +251,11 @@ namespace progression {
 
 			void calcSCCs();
 
-
-        void calcAddToActionMapping();
+            void calcPrecLessActionSet();
+            void removeDuplicatedPrecsInActions();
+            void calcPrecToActionMapping();
+            void calcAddToActionMapping();
+            void calcDelToActionMapping();
 
     private:
 			bool first = true;

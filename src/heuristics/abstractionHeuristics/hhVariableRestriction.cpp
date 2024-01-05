@@ -140,8 +140,13 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(
         // TODO: Klären, ob auch conditional effects betrachtet werden müssen. Die Properties werden zwar deklariert und
         //       definiert, werden aber sonst nicht weiter verwendet.
         //       Bisheriger Code wurde ausgelagert in DESKTOP - conditional_effects_restriction_save.txt (lokal).
-
     }
+
+    restrictedModel->calcPrecLessActionSet();
+    restrictedModel->removeDuplicatedPrecsInActions();
+    restrictedModel->calcPrecToActionMapping();
+    restrictedModel->calcAddToActionMapping();
+    restrictedModel->calcDelToActionMapping();
 
     // Initial state and task network should remain empty. Will be set during search.
     // TODO: Können wir das Modell wiederverwenden bei jedem Suchknoten?
