@@ -256,6 +256,8 @@ namespace progression {
             void calcPrecToActionMapping();
             void calcAddToActionMapping();
             void calcDelToActionMapping();
+            void calcTaskToMethodMapping();
+            void calcDistinctSubtasksOfMethods();
 
     private:
 			bool first = true;

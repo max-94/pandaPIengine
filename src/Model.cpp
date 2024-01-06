@@ -1783,18 +1783,20 @@ newlyReachedMLMs = new noDelIntSet();
 					<< endl;
 				exit(-1);
 			}
-#ifndef NDEBUG
+
+            #ifndef NDEBUG
 			for (int j = 0; j < numSubTasks[i]; j++) {
 				assert(subTasks[i][j] < numTasks);
 			}
-#endif
+            #endif
+
 			getline(domainFile, line);
 			ordering[i] = readIntList(line, numOrderings[i]);
 
 			// transitive reduction and determination of properties
 			computeTransitiveChangeOfMethodOrderings(false,i);
 
-#ifndef NDEBUG
+            #ifndef NDEBUG
 			assert((numOrderings[i] % 2) == 0);
 			for (int j = 0; j < numOrderings[i]; j++) {
 				assert(ordering[i][j] < numSubTasks[i]);
@@ -1843,115 +1845,11 @@ newlyReachedMLMs = new noDelIntSet();
 					}
 				}
 			}
-#endif
+            #endif
 		}
 
-
-		// Mapping from task to methods where it is a subtasks
-		stToMethodNum = new int[this->numTasks];
-		for (int i = 0; i < this->numTasks; i++)
-			stToMethodNum[i] = 0;
-		for (int iM = 0; iM < this->numMethods; iM++) {
-			for (int iST = 0; iST < this->numSubTasks[iM]; iST++) {
-				int st = this->subTasks[iM][iST];
-				stToMethodNum[st]++;
-			}
-		}
-
-		stToMethod = new int *[this->numTasks];
-		int *k = new int[this->numTasks];
-		for (int i = 0; i < this->numTasks; i++) {
-			stToMethod[i] = new int[stToMethodNum[i]];
-			k[i] = 0;
-		}
-
-		for (int m = 0; m < this->numMethods; m++) {
-			for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
-				int st = this->subTasks[m][iST];
-				if (iu.indexOf(stToMethod[st], 0, k[st] - 1, m) < 0) {
-					stToMethod[st][k[st]++] = m;
-				} else {
-					stToMethodNum[st]--;
-				}
-			}
-		}
-		delete[] k;
-
-#ifndef NDEBUG
-		/*
-		 * check mapping
-		 */
-		for (int m = 0; m < this->numMethods; m++) {
-			for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
-				int st = this->subTasks[m][iST];
-				int i = iu.indexOf(stToMethod[st], 0, stToMethodNum[st] - 1, m);
-				assert(i >= 0);
-			}
-		}
-		set<int> test;
-		for (int t = 0; t < numTasks; t++) {
-			test.clear();
-			for (int iM = 0; iM < stToMethodNum[t]; iM++) {
-				int m = stToMethod[t][iM];
-				test.insert(m);
-			}
-			assert(test.size() == stToMethodNum[t]);
-		}
-		for (int t = 0; t < numTasks; t++) {
-			for (int iM = 0; iM < stToMethodNum[t]; iM++) {
-				int m = stToMethod[t][iM];
-				bool isIn = false;
-				for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
-					int st = this->subTasks[m][iST];
-					if (st == t) {
-						isIn = true;
-						break;
-					}
-				}
-				assert(isIn);
-			}
-		}
-#endif
-
-		// sets of distinct subtasks of methods
-		this->numDistinctSTs = new int[numMethods];
-		this->sortedDistinctSubtasks = new int *[numMethods];
-		this->sortedDistinctSubtaskCount = new int *[numMethods];
-
-		for (int m = 0; m < this->numMethods; m++) {
-			int n = this->numSubTasks[m];
-			int *sts = new int[n];
-			int *stcount = new int[n];
-
-			for (int ist = 0; ist < n; ist++) {
-				sts[ist] = this->subTasks[m][ist];
-				stcount[ist] = 1;
-			}
-
-			for (int ist = 0; ist < n; ist++) {
-				stcount[ist] = 1;
-			}
-			iu.sort(sts, 0, n - 1);
-
-			for (int i = 0; i < n - 1; i++) {
-				int j = 0;
-				while (((i + j + 1) < n) && (sts[i] == sts[i + j + 1])) {
-					j++;
-				}
-				if (j > 0) {
-					stcount[i] += j;
-					int k = 0;
-					while ((i + k + j) < n) {
-						sts[i + k] = sts[i + k + j];
-						k++;
-					}
-					n -= j;
-				}
-			}
-			this->numDistinctSTs[m] = n;
-			this->sortedDistinctSubtasks[m] = sts;
-			this->sortedDistinctSubtaskCount[m] = stcount;
-		}
+		calcTaskToMethodMapping();
+        calcDistinctSubtasksOfMethods();
 	}
 
     void Model::calcPrecLessActionSet() {
@@ -1971,26 +1869,26 @@ newlyReachedMLMs = new noDelIntSet();
 
     void Model::removeDuplicatedPrecsInActions() {
         for (int i = 0; i < numActions; i++) {
-            set<int> intSet;
+            set<int> ints;
             for (int j = 0; j < numPrecs[i]; j++) {
                 assert(precLists[i][j] < numStateBits);
-                intSet.insert(precLists[i][j]);
+                ints.insert(precLists[i][j]);
             }
-            int intSize = intSet.size();
+            int intSize = static_cast<int>(ints.size());
             if (intSize < numPrecs[i]) {
                 cout << "Action #" << i << " prec/add/del-definition contains same state feature twice" << endl;
 
-#ifndef NDEBUG
+                #ifndef NDEBUG
                 cout << "Original:";
                 for (int j = 0; j < numPrecs[i]; j++) cout << " " << precLists[i][j];
                 cout << endl;
-#endif
+                #endif
 
-                numPrecs[i] = intSet.size();
+                numPrecs[i] = static_cast<int>(ints.size());
                 delete[] precLists[i];
                 precLists[i] = new int[numPrecs[i]];
                 int cur = 0;
-                for (int p : intSet) {
+                for (int p : ints) {
                     precLists[i][cur++] = p;
                 }
                 assert(cur == intSize);
@@ -2010,7 +1908,7 @@ newlyReachedMLMs = new noDelIntSet();
         precToAction = new int *[numStateBits];
 
         for (int i = 0; i < numStateBits; i++) {
-            precToActionSize[i] = precToActionTemp[i].size();
+            precToActionSize[i] = static_cast<int>(precToActionTemp[i].size());
             precToAction[i] = new int[precToActionSize[i]];
             int cur = 0;
             for (int ac : precToActionTemp[i]) {
@@ -2032,7 +1930,7 @@ newlyReachedMLMs = new noDelIntSet();
         addToAction = new int*[numStateBits];
 
         for (int i = 0; i < numStateBits; i++) {
-            addToActionSize[i] = addToActionTemp[i].size();
+            addToActionSize[i] = static_cast<int>(addToActionTemp[i].size());
             addToAction[i] = new int[addToActionSize[i]];
             int cur = 0;
             for (int ac : addToActionTemp[i]) {
@@ -2054,7 +1952,7 @@ newlyReachedMLMs = new noDelIntSet();
         delToAction = new int*[numStateBits];
 
         for (int i = 0; i < numStateBits; i++) {
-            delToActionSize[i] = delToActionTemp[i].size();
+            delToActionSize[i] = static_cast<int>(delToActionTemp[i].size());
             delToAction[i] = new int[delToActionSize[i]];
             int cur = 0;
             for (int ac : delToActionTemp[i]) {
@@ -2090,6 +1988,111 @@ newlyReachedMLMs = new noDelIntSet();
         }
     }
 
+    void Model::calcTaskToMethodMapping() {
+        stToMethodNum = new int[this->numTasks];
+        for (int i = 0; i < this->numTasks; i++)
+            stToMethodNum[i] = 0;
+        for (int iM = 0; iM < this->numMethods; iM++) {
+            for (int iST = 0; iST < this->numSubTasks[iM]; iST++) {
+                int st = this->subTasks[iM][iST];
+                stToMethodNum[st]++;
+            }
+        }
+
+        stToMethod = new int *[this->numTasks];
+        int *k = new int[this->numTasks];
+        for (int i = 0; i < this->numTasks; i++) {
+            stToMethod[i] = new int[stToMethodNum[i]];
+            k[i] = 0;
+        }
+
+        for (int m = 0; m < this->numMethods; m++) {
+            for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
+                int st = this->subTasks[m][iST];
+                if (iu.indexOf(stToMethod[st], 0, k[st] - 1, m) < 0) {
+                    stToMethod[st][k[st]++] = m;
+                } else {
+                    stToMethodNum[st]--;
+                }
+            }
+        }
+        delete[] k;
+
+        #ifndef NDEBUG
+        // Check mapping
+        for (int m = 0; m < this->numMethods; m++) {
+            for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
+                int st = this->subTasks[m][iST];
+                int i = iu.indexOf(stToMethod[st], 0, stToMethodNum[st] - 1, m);
+                assert(i >= 0);
+            }
+        }
+        set<int> test;
+        for (int t = 0; t < numTasks; t++) {
+            test.clear();
+            for (int iM = 0; iM < stToMethodNum[t]; iM++) {
+                int m = stToMethod[t][iM];
+                test.insert(m);
+            }
+            assert(test.size() == stToMethodNum[t]);
+        }
+        for (int t = 0; t < numTasks; t++) {
+            for (int iM = 0; iM < stToMethodNum[t]; iM++) {
+                int m = stToMethod[t][iM];
+                bool isIn = false;
+                for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
+                    int st = this->subTasks[m][iST];
+                    if (st == t) {
+                        isIn = true;
+                        break;
+                    }
+                }
+                assert(isIn);
+            }
+        }
+        #endif
+    }
+
+    void Model::calcDistinctSubtasksOfMethods() {
+        this->numDistinctSTs = new int[numMethods];
+        this->sortedDistinctSubtasks = new int *[numMethods];
+        this->sortedDistinctSubtaskCount = new int *[numMethods];
+
+        for (int m = 0; m < this->numMethods; m++) {
+            int n = this->numSubTasks[m];
+            int *sts = new int[n];
+            int *stcount = new int[n];
+
+            for (int ist = 0; ist < n; ist++) {
+                sts[ist] = this->subTasks[m][ist];
+                stcount[ist] = 1;
+            }
+
+            for (int ist = 0; ist < n; ist++) {
+                stcount[ist] = 1;
+            }
+            iu.sort(sts, 0, n - 1);
+
+            for (int i = 0; i < n - 1; i++) {
+                int j = 0;
+                while (((i + j + 1) < n) && (sts[i] == sts[i + j + 1])) {
+                    j++;
+                }
+                if (j > 0) {
+                    stcount[i] += j;
+                    int k = 0;
+                    while ((i + k + j) < n) {
+                        sts[i + k] = sts[i + k + j];
+                        k++;
+                    }
+                    n -= j;
+                }
+            }
+            this->numDistinctSTs[m] = n;
+            this->sortedDistinctSubtasks[m] = sts;
+            this->sortedDistinctSubtaskCount[m] = stcount;
+        }
+    }
 
 	void Model::read(istream *inputStream) {
 		string line;
@@ -2104,10 +2107,10 @@ newlyReachedMLMs = new noDelIntSet();
             generateVectorRepresentation();
         }
 
-#if DLEVEL == 5
+        #if DLEVEL == 5
 		printActions();
 		printMethods();
-#endif
+        #endif
 	}
 
 	tuple<int *, int *, int **> Model::readConditionalIntList(string s, int &sizeA, int &sizeB, int *&sizeC) {

@@ -23,7 +23,8 @@ private:
     map<int, int> factOrigToRestrictedMapping;
     map<int, int> mutexOrigToRestrictedMapping;
 
-    void filterFactsWithPattern(int actionId, int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists);
+    Model* createRestrictedProblem(vector<int> pattern);
+    void filterFactsWithPattern(int actionId, const int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists);
 };
 
 } /* namespace progression */
