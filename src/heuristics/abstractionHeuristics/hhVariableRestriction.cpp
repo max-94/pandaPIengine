@@ -1,13 +1,21 @@
+#include <cassert>
 #include "hhVariableRestriction.h"
 
 namespace progression {
 
 hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(htn, index) {
-    // TODO: Replace with pattern selection procedure.
-    // TODO: Assuming that facts in pattern do exist! Should be verified to prevent errors...
     // TODO: Prüfen, ob noch weitere Properties gesetzt werden bevor die read Methoden aufgerufen werden.
-    pattern = {3,0};
+
+    // TODO: Replace with pattern selection procedure.
+    pattern = {3,0,17};
+    // Verifying that each fact in pattern does exist.
+    for (int fact : pattern) {
+        assert(fact < htn->numStateBits);
+    }
+    // Sorting pattern to make further computations easier.
     std::sort(pattern.begin(), pattern.end());
+
+    // Create restricted model based on given pattern.
     restrictedModel = createRestrictedProblem(pattern);
 }
 

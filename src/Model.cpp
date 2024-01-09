@@ -27,88 +27,91 @@ using namespace std;
 
 namespace progression {
 
-	Model::Model() : Model(false, mtrNO, true, true) {
-	}
+	Model::Model() : Model(false, mtrNO, true, true) { }
 
-	Model::Model(bool trackTasks, eMaintainTaskReachability maintainTaskReachability, bool progressEffectLess,
-			bool progressOneModActions) : trackTasksInTN(trackTasks), progressEffectLess(progressEffectLess),
-	progressOneModActions(progressOneModActions),
-	maintainTaskReachability(maintainTaskReachability) {
-		numStateBits = 0;
-		numTasks = 0;
-		numPrecLessActions = 0;
-		numMethods = 0;
-		initialTask = -1;
-		gSize = 0;
-		isHtnModel = false;
-		numActions = 0;
-		numVars = 0;
-		s0Size = 0;
-		factStrs = nullptr;
-		firstIndex = nullptr;
-		lastIndex = nullptr;
-		varNames = nullptr;
-		actionCosts = nullptr;
-		precLists = nullptr;
-		addLists = nullptr;
-		delLists = nullptr;
-		precLessActions = nullptr;
-		precToActionSize = nullptr;
-		precToAction = nullptr;
-		addToActionSize = nullptr;
-		addToAction = nullptr;
-		delToActionSize = nullptr;
-		delToAction = nullptr;
-		numPrecs = nullptr;
-		numAdds = nullptr;
-		numDels = nullptr;
-		s0List = nullptr;
-		gList = nullptr;
-		isPrimitive = nullptr;
-		taskNames = nullptr;
-		emptyMethod = nullptr;
-		decomposedTask = nullptr;
-		numSubTasks = nullptr;
-		numFirstPrimSubTasks = nullptr;
-		numFirstAbstractSubTasks = nullptr;
-		numOrderings = nullptr;
-		methodIsTotallyOrdered = nullptr;
-		methodTotalOrder = nullptr;
-		methodNames = nullptr;
-		numFirstTasks = nullptr;
-		numLastTasks = nullptr;
-		taskToMethods = nullptr;
-		numMethodsForTask = nullptr;
-		subTasks = nullptr;
-		ordering = nullptr;
-		methodsFirstTasks = nullptr;
-		methodsLastTasks = nullptr;
-		methodSubtaskSuccNum = nullptr;
-		addVectors = nullptr;
-		delVectors = nullptr;
-		s0Vector = nullptr;
+	Model::Model(
+        bool trackTasks, eMaintainTaskReachability maintainTaskReachability, bool progressEffectLess,
+		bool progressOneModActions
+    ) : trackTasksInTN(trackTasks),
+        progressEffectLess(progressEffectLess),
+	    progressOneModActions(progressOneModActions),
+	    maintainTaskReachability(maintainTaskReachability) {
+		    numStateBits = 0;
+		    numTasks = 0;
+		    numPrecLessActions = 0;
+		    numMethods = 0;
+		    initialTask = -1;
+		    gSize = 0;
+		    isHtnModel = false;
+		    numActions = 0;
+		    numVars = 0;
+		    s0Size = 0;
+		    factStrs = nullptr;
+		    firstIndex = nullptr;
+		    lastIndex = nullptr;
+		    varNames = nullptr;
+		    actionCosts = nullptr;
+		    precLists = nullptr;
+		    addLists = nullptr;
+		    delLists = nullptr;
+		    precLessActions = nullptr;
+		    precToActionSize = nullptr;
+		    precToAction = nullptr;
+		    addToActionSize = nullptr;
+		    addToAction = nullptr;
+		    delToActionSize = nullptr;
+		    delToAction = nullptr;
+		    numPrecs = nullptr;
+		    numAdds = nullptr;
+		    numDels = nullptr;
+		    s0List = nullptr;
+		    gList = nullptr;
+		    isPrimitive = nullptr;
+		    taskNames = nullptr;
+		    emptyMethod = nullptr;
+		    decomposedTask = nullptr;
+		    numSubTasks = nullptr;
+		    numFirstPrimSubTasks = nullptr;
+		    numFirstAbstractSubTasks = nullptr;
+		    numOrderings = nullptr;
+		    methodIsTotallyOrdered = nullptr;
+		    methodTotalOrder = nullptr;
+		    methodNames = nullptr;
+		    numFirstTasks = nullptr;
+		    numLastTasks = nullptr;
+		    taskToMethods = nullptr;
+		    numMethodsForTask = nullptr;
+		    subTasks = nullptr;
+		    ordering = nullptr;
+		    methodsFirstTasks = nullptr;
+		    methodsLastTasks = nullptr;
+		    methodSubtaskSuccNum = nullptr;
+		    addVectors = nullptr;
+		    delVectors = nullptr;
+		    s0Vector = nullptr;
 
-		if (progressEffectLess) {
-			effectLess = new FlexIntStack();
-			effectLess->init(25);
-		}
-#ifdef ONEMODMETH
-		oneMod = new FlexIntStack();
-		oneMod->init(25);
-#endif
+		    if (progressEffectLess) {
+			    effectLess = new FlexIntStack();
+			    effectLess->init(25);
+		    }
 
-		/*
-#ifdef TRACKLMSFULL
-newlyReachedFLMs = new noDelIntSet();
-newlyReachedTLMs = new noDelIntSet();
-newlyReachedMLMs = new noDelIntSet();
-newlyReachedFLMs->init(tn);
-newlyReachedTLMs = new noDelIntSet();
-newlyReachedMLMs = new noDelIntSet();
-#endif
-*/
+            #ifdef ONEMODMETH
+            oneMod = new FlexIntStack();
+		    oneMod->init(25);
+            #endif
 
-	}
+		    /*
+            #ifdef TRACKLMSFULL
+            newlyReachedFLMs = new noDelIntSet();
+            newlyReachedTLMs = new noDelIntSet();
+            newlyReachedMLMs = new noDelIntSet();
+            newlyReachedFLMs->init(tn);
+            newlyReachedTLMs = new noDelIntSet();
+            newlyReachedMLMs = new noDelIntSet();
+            #endif
+            */
+
+	    }
 
 	Model::~Model() {
 		delete[] factStrs;

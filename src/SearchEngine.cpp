@@ -161,13 +161,11 @@ void printHeuristicHelp(){
 
 
 int main(int argc, char *argv[]) {
-	//speed_test();
-	//return 42;
-#ifndef NDEBUG
+    #ifndef NDEBUG
     cout
-            << "You have compiled the search engine without setting the NDEBUG flag. This will make it slow and should only be done for debug."
-            << endl;
-#endif
+    << "You have compiled the search engine without setting the NDEBUG flag. This will make it slow and should only be done for debug."
+    << endl;
+    #endif
 
 	gengetopt_args_info args_info;
 	if (cmdline_parser(argc, argv, &args_info) != 0) return 1;
@@ -209,8 +207,7 @@ int main(int argc, char *argv[]) {
 		std::cout << "Reading input from " << inputFilename << "." << std::endl;
 
 		std::ifstream * fileInput = new std::ifstream(inputFilename);
-		if (!fileInput->good())
-		{
+		if (!fileInput->good()) {
 			std::cerr << "Unable to open input file " << inputFilename << ": " << strerror (errno) << std::endl;
 			return 1;
 		}
@@ -218,11 +215,7 @@ int main(int argc, char *argv[]) {
 		inputStream = fileInput;
 	}
 
-	//
-
 	bool useTaskHash = true;
-
-
 
     /* Read model */
     // todo: the correct value of maintainTaskRechability depends on the heuristic
@@ -236,7 +229,6 @@ int main(int argc, char *argv[]) {
 	searchNode* tnI = htn->prepareTNi(htn);
 			
 	if (inputFilename != "-") ((ifstream*) inputStream)->close();
-
 
 	if (args_info.writeInputToHDDL_given){
 		cout << "writing input problem to file" << endl;
@@ -252,8 +244,6 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-
-	
     if(reachability != mtrNO) {
         htn->calcSCCs();
         htn->calcSCCGraph();
@@ -262,7 +252,7 @@ int main(int argc, char *argv[]) {
         htn->updateReachability(tnI);
     }
 
-//    Heuristic *hLMC = new hhLMCount(htn, 0, tnI, lmfFD);
+    // Heuristic *hLMC = new hhLMCount(htn, 0, tnI, lmfFD);
 
 	planningAlgorithm algo = PROGRESSION;
 	if (args_info.progression_given) algo = PROGRESSION;
@@ -271,11 +261,10 @@ int main(int argc, char *argv[]) {
 	if (args_info.interactive_given) algo = INTERACTIVE;
 	if (args_info.translation_given) algo = TRANSLATION;
 
-
-	if (algo == INTERACTIVE){
+	if (algo == INTERACTIVE) {
 		cout << "Selected Planning Algorihtm: interactive";
 		interactivePlanner(htn,tnI);
-	} else if (algo == PROGRESSION){
+	} else if (algo == PROGRESSION) {
 		cout << "Selected Planning Algorithm: progression search";
 	
 		int hLength = args_info.heuristic_given;
@@ -287,7 +276,7 @@ int main(int argc, char *argv[]) {
 		}
     	Heuristic **heuristics = new Heuristic *[hLength];
 		map<pair<string,map<string,string>>, int> heuristics_so_far;
-		for (int i = 0; i < hLength; i++){
+		for (int i = 0; i < hLength; i++) {
 			auto [hName, args] = parse_heuristic_with_arguments_from_braced_expression(args_info.heuristic_arg[i]);
 			
 			if (heuristics_so_far.count({hName, args})){
@@ -350,7 +339,7 @@ int main(int argc, char *argv[]) {
 					((hhRC2<hsAddFF>*)heuristics[i])->sasH->heuristic = sasFF;
 				}
 			} else if (hName == "dof"){
-#ifndef CMAKE_NO_ILP
+                #ifndef CMAKE_NO_ILP
 				string type_string = (args.count("type"))?args["type"]:args["arg1"];
 				IloNumVar::Type intType = IloNumVar::Int;
 				IloNumVar::Type boolType = IloNumVar::Bool;
@@ -402,10 +391,10 @@ int main(int argc, char *argv[]) {
 
 
 				heuristics[i] = new hhDOfree(htn,tnI,i,intType,boolType,mode,tdg,pg,andOrLM,lmclms,netchange,externalLM);
-#else
+                #else
 				cout << "Planner compiled without CPLEX support" << endl;
 				return 1;
-#endif
+                #endif
 			} else {
 				cout << "Heuristic type \"" << hName << "\" is unknown." << endl;
 				return 1;
@@ -425,16 +414,17 @@ int main(int argc, char *argv[]) {
 
 		cout << "Search config:" << endl;
 		cout << " - type: ";
+
 		switch (aStarType){
 			case gValNone: cout << "greedy"; break;
 			case gValActionCosts: cout << "cost optimal"; break;
 			case gValPathCosts: cout << "path cost"; break;
 			case gValActionPathCosts: cout << "action cost + decomposition cost"; break;
 		}
+
 		cout << endl;
 		cout << " - weight: " << aStarWeight << endl;
 		cout << " - suboptimal: " << (suboptimalSearch?"true":"false") << endl;
-
 
 		bool noVisitedList = args_info.noVisitedList_flag;
 		bool allowGIcheck = args_info.noGIcheck_flag;
@@ -448,12 +438,11 @@ int main(int argc, char *argv[]) {
 		VisitedList visi(htn,noVisitedList, suboptimalSearch, taskHash, taskSequenceHash, topologicalOrdering, orderPairsHash, layerHash, allowGIcheck, allowParalleSequencesMode);
     	PriorityQueueSearch search;
     	OneQueueWAStarFringe fringe(aStarType, aStarWeight, hLength);
-
-
 		bool printPlan = !args_info.noPlanOutput_flag;
+
     	search.search(htn, tnI, timeL, suboptimalSearch, printPlan, heuristics, hLength, visi, fringe);
 	} else if (algo == SAT){
-#ifndef CMAKE_NO_SAT
+        #ifndef CMAKE_NO_SAT
 		bool block_compression = args_info.blockcompression_flag;
 		bool sat_mutexes = args_info.satmutexes_flag;
 		bool effectLessActionsInSeparateLeaf = args_info.methodPreconditionsInSeparateLeafs_given;
@@ -468,15 +457,15 @@ int main(int argc, char *argv[]) {
 		if (sat_mutexes) compute_Rintanen_Invariants(htn);
 
 		solve_with_sat_planner(htn, block_compression, sat_mutexes, pruningMode, effectLessActionsInSeparateLeaf, optimisingMode);
-#else
+        #else
 		cout << "Planner compiled without SAT planner support" << endl;
-#endif
+        #endif
 	} else if (algo == BDD){
-#ifndef CMAKE_NO_BDD
+        #ifndef CMAKE_NO_BDD
 		build_automaton(htn);
-#else
+        #else
 		cout << "Planner compiled without symbolic planner support" << endl;
-#endif
+        #endif
 	} else if (algo == TRANSLATION){
 		TranslationType type;
 		if (string(args_info.transtype_arg) == "push") type = Push; 
@@ -492,8 +481,6 @@ int main(int argc, char *argv[]) {
 	}
 
     delete htn;
-    
-	
 	return 0;
 }
 
