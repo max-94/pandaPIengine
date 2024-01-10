@@ -208,7 +208,6 @@ namespace progression {
                             continueSearch = this->optimzeSol;
                             if (!continueSearch)
                                 break;
-
                         }
 
                         fringe.push(n2);

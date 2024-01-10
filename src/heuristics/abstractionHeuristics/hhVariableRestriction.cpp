@@ -4,10 +4,8 @@
 namespace progression {
 
 hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(htn, index) {
-    // TODO: Prüfen, ob noch weitere Properties gesetzt werden bevor die read Methoden aufgerufen werden.
-
     // TODO: Replace with pattern selection procedure.
-    pattern = {3,0,17};
+    pattern = {3,0};
     // Verifying that each fact in pattern does exist.
     for (int fact : pattern) {
         assert(fact < htn->numStateBits);
@@ -31,6 +29,7 @@ string hhVariableRestriction::getDescription() {
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int action) {
     // TODO: Set initial state and network. Then call procedure to solve restricted problem. Return costs as value.
     cout << "Compute value for action." << endl;
+    freeMemoryOfReusedProperties();
     n->heuristicValue[index] = 0;
     n->goalReachable = true;
 }
@@ -39,6 +38,7 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
                                               int method) {
     // TODO: Set initial state and network. Then call procedure to solve restricted problem. Return costs as value.
     cout << "Compute value for compound task." << endl;
+    freeMemoryOfReusedProperties();
     n->heuristicValue[index] = 0;
     n->goalReachable = true;
 }
@@ -66,6 +66,73 @@ void hhVariableRestriction::filterFactsInActionsWithPattern(
     vector<int>().swap(tmpList);
 }
 
+void hhVariableRestriction::freeMemoryOfReusedProperties() const {
+    // Free memory for method and subtask related stuff.
+    delete[] restrictedModel->stToMethodNum;
+    delete[] restrictedModel->numMethodsForTask;
+    for (int i = 0; i < restrictedModel->numTasks; i++) {
+        if (restrictedModel->stToMethod != nullptr)
+            delete[] restrictedModel->stToMethod[i];
+        if (restrictedModel->taskToMethods != nullptr)
+            delete[] restrictedModel->taskToMethods[i];
+    }
+    delete[] restrictedModel->stToMethod;
+    delete[] restrictedModel->taskToMethods;
+
+    delete[] restrictedModel->numDistinctSTs;
+    delete[] restrictedModel->numFirstTasks;
+    delete[] restrictedModel->numFirstAbstractSubTasks;
+    delete[] restrictedModel->numFirstPrimSubTasks;
+    delete[] restrictedModel->numLastTasks;
+    for (int i = 0; i < restrictedModel->numMethods; i++) {
+        if (restrictedModel->sortedDistinctSubtasks != nullptr)
+            delete[] restrictedModel->sortedDistinctSubtasks[i];
+        if (restrictedModel->sortedDistinctSubtaskCount != nullptr)
+            delete[] restrictedModel->sortedDistinctSubtaskCount[i];
+        if (restrictedModel->methodsFirstTasks != nullptr)
+            delete[] restrictedModel->methodsFirstTasks[i];
+        if (restrictedModel->methodsLastTasks != nullptr)
+            delete[] restrictedModel->methodsLastTasks[i];
+        if (restrictedModel->methodSubtaskSuccNum != nullptr)
+            delete[] restrictedModel->methodSubtaskSuccNum[i];
+    }
+    delete[] restrictedModel->sortedDistinctSubtasks;
+    delete[] restrictedModel->sortedDistinctSubtaskCount;
+    delete[] restrictedModel->methodsFirstTasks;
+    delete[] restrictedModel->methodsLastTasks;
+    delete[] restrictedModel->methodSubtaskSuccNum;
+
+    // Free memory for SCC related stuff.
+    if (restrictedModel->calculatedSccs) {
+        delete[] restrictedModel->taskToSCC;
+        delete[] restrictedModel->sccSize;
+        delete[] restrictedModel->sccsCyclic;
+        delete[] restrictedModel->sccGnumSucc;
+        delete[] restrictedModel->sccGnumPred;
+        delete[] restrictedModel->numReachable;
+
+        for (int i = 0; i < restrictedModel->numSCCs; i++) {
+            delete[] restrictedModel->sccToTasks[i];
+            delete[] restrictedModel->sccG[i];
+            delete[] restrictedModel->sccGinverse[i];
+        }
+        delete[] restrictedModel->sccToTasks;
+        delete[] restrictedModel->sccG;
+        delete[] restrictedModel->sccGinverse;
+
+        for (int i = 0; i < restrictedModel->numTasks; i++) {
+            delete[] restrictedModel->reachable[i];
+        }
+        delete[] restrictedModel->reachable;
+
+        restrictedModel->numSCCs = 0;
+        restrictedModel->numCyclicSccs = 0;
+        restrictedModel->numSccOneWithSelfLoops = 0;
+        restrictedModel->sccMaxSize = 0;
+        restrictedModel->calculatedSccs = false;
+    }
+}
+
 Model* hhVariableRestriction::createRestrictedProblem(vector<int> pattern) {
     auto model = new Model(true, mtrACTIONS, true, true);
 
@@ -77,9 +144,8 @@ Model* hhVariableRestriction::createRestrictedProblem(vector<int> pattern) {
         model->factStrs[i] = htn->factStrs[pattern[i]];
     }
 
-    // TODO: Ist dieser Abschnitt überhaupt relevant für uns? Oder könnte man den Teil auch einfach weglassen?
-    // TODO: Überlegen wie man mit den strikten Mutexes umgeht. Zeilen 1582 bis 1602.
     // Process mutex groups. Only keep those groups that contains at least one fact from the pattern.
+    // It is required by the RC2 with FF Heuristic to solve restricted problem.
     map<int, vector<int>> groupToFactMapping;
     for (int i = 0; i < model->numStateBits; i++) {
         int mutexGroup = htn->varOfStateBit[pattern[i]];
@@ -119,9 +185,6 @@ Model* hhVariableRestriction::createRestrictedProblem(vector<int> pattern) {
     model->numDels = new int[model->numActions];
     model->delLists = new int*[model->numActions];
 
-    // TODO: Falls conditional effects betrachtet werden, dann muss die Definition hier noch rein.
-    //       Befindet sich auch in conditional_effects_restriction_save.txt.
-
     for (int i = 0; i < model->numActions; i++) {
         model->actionCosts[i] = htn->actionCosts[i];
         filterFactsInActionsWithPattern(i, htn->numPrecs, htn->precLists, model->numPrecs, model->precLists);
@@ -131,10 +194,6 @@ Model* hhVariableRestriction::createRestrictedProblem(vector<int> pattern) {
         if (model->numPrecs[i] == 0) {
             model->numPrecLessActions++;
         }
-
-        // TODO: Klären, ob auch conditional effects betrachtet werden müssen. Die Properties werden zwar deklariert und
-        //       definiert, werden aber sonst nicht weiter verwendet.
-        //       Bisheriger Code wurde ausgelagert in DESKTOP - conditional_effects_restriction_save.txt (lokal).
     }
 
     model->calcPrecLessActionSet();
@@ -144,6 +203,7 @@ Model* hhVariableRestriction::createRestrictedProblem(vector<int> pattern) {
     model->calcDelToActionMapping();
 
     // Initial state and task network should remain empty. Will be set during search.
+
     // Restrict goal.
     vector<int> tmpGoal;
     for (int i = 0; i < htn->gSize; i++) {

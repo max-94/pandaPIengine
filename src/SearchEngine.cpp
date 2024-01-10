@@ -99,8 +99,12 @@ pair<string,map<string,string>> parse_heuristic_with_arguments_from_braced_expre
 }
 
 
-enum planningAlgorithm{
-	PROGRESSION,SAT,BDD,INTERACTIVE,TRANSLATION
+enum planningAlgorithm {
+	PROGRESSION,
+    SAT,
+    BDD,
+    INTERACTIVE,
+    TRANSLATION
 };
 
 
@@ -483,116 +487,3 @@ int main(int argc, char *argv[]) {
     delete htn;
 	return 0;
 }
-
-
-
-
-
-
-
-
-/*
-    long initO, initN;
-    long genO, genN;
-    long initEl = 0;
-    long genEl;
-    long start, end;
-    long tlmEl;
-    long flmEl = 0;
-    long mlmEl = 0;
-    long tlmO, flmO, mlmO, tlmN, flmN, mlmN;
-
-    timeval tp;
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    LmCausal* lmc = new LmCausal(htn);
-    lmc->prettyprintAndOrGraph();
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    initN = end - start;
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    LMsInAndOrGraphs* ao = new LMsInAndOrGraphs(htn);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    initO = end - start;
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-	lmc->calcLMs(tnI);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    genN = end - start;
-
-    tlmN = landmark::coutLM(lmc->getLMs(), task, lmc->numLMs);
-    flmN = landmark::coutLM(lmc->getLMs(), fact, lmc->numLMs);
-    mlmN = landmark::coutLM(lmc->getLMs(), METHOD, lmc->numLMs);
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    ao->generateAndOrLMs(tnI);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    genO = end - start;
-
-    tlmO = landmark::coutLM(ao->getLMs(), task, ao->getNumLMs());
-    flmO = landmark::coutLM(ao->getLMs(), fact, ao->getNumLMs());
-    mlmO = landmark::coutLM(ao->getLMs(), METHOD, ao->getNumLMs());
-
-    if(lmc->numLMs != ao->getNumLMs()) {
-        cout << "AAAAAAAAAAAAAAAAAAAAHHH " << ao->getNumLMs() << " - " << lmc->numLMs << endl;
-        for(int i = 0; i < ao->getNumLMs(); i ++) {
-            ao->getLMs()[i]->printLM();
-        }
-        cout << "----------------------" << endl;
-        for(int i = 0; i < lmc->numLMs; i++) {
-            lmc->landmarks[i]->printLM();
-        }
-    }
-
-    cout << "TIME:" << endl;
-    cout << "Init       : " << initO << " " << initN << " delta " << (initN - initO) << endl;
-    cout << "Generation : " << genO << " " << genN << " delta " << (genN - genO) << endl;
-    cout << "Total      : " << (initO + genO) << " " << (initN + genN) << " delta " << ((initN + genN) - (initO + genO)) << endl;
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    ao->generateLocalLMs(htn, tnI);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    genEl = end - start;
-
-    tlmEl = landmark::coutLM(ao->getLMs(), task, ao->getNumLMs());
-    flmEl = landmark::coutLM(ao->getLMs(), fact, ao->getNumLMs());
-    mlmEl = landmark::coutLM(ao->getLMs(), METHOD, ao->getNumLMs());
-
-    cout << "LMINFO:[" << s << ";";
-    cout << initEl << ";" << genEl << ";" << (initEl + genEl) << ";";
-    cout << initO << ";" << genO << ";" << (initO + genO) << ";";
-    cout << initN << ";" << genN << ";" << (initN + genN) << ";";
-    cout << tlmEl << ";" << flmEl << ";" << mlmEl << ";";
-    cout << tlmO << ";" << flmO << ";" << mlmO << ";";
-    cout << tlmN << ";" << flmN << ";" << mlmN << ";";
-    cout << "]" << endl;
-
-	//lmc->prettyprintAndOrGraph();
-    for(int i = 0; i < htn->numTasks; i++)
-        cout << i << " " << htn->taskNames[i] << endl;
-    for(int i = 0; i < htn->numStateBits; i++)
-        cout << i << " " << htn->factStrs[i] << endl;
-
-    cout << "AND/OR landmarks" << endl;
-    for(int i = 0; i < lmc->numLMs; i++) {
-        lmc->getLMs()[i]->printLM();
-    }
-    cout << "Local landmarks" << endl;
-    for(int i = 0; i < ao->getNumLMs(); i++) {
-       ao->getLMs()[i]->printLM();
-    }
-
-    cout << "PRINT" << endl;
-    lmc->prettyPrintLMs();
-
-	exit(17);*/
-
