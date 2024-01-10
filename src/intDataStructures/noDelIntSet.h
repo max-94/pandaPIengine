@@ -27,6 +27,7 @@ public:
 	virtual ~noDelIntSet();
 
 	void init(int size);
+    void reset();
 	int getSize();
 	void insert(int i);
 	bool isEmpty();

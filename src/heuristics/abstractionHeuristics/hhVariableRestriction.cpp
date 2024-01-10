@@ -27,8 +27,6 @@ string hhVariableRestriction::getDescription() {
 }
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int action) {
-    // TODO: Set initial state and network. Then call procedure to solve restricted problem. Return costs as value.
-    cout << "Compute value for action." << endl;
     freeMemoryOfReusedProperties();
     n->heuristicValue[index] = 0;
     n->goalReachable = true;
@@ -36,9 +34,26 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int absTask,
                                               int method) {
-    // TODO: Set initial state and network. Then call procedure to solve restricted problem. Return costs as value.
-    cout << "Compute value for compound task." << endl;
     freeMemoryOfReusedProperties();
+
+    // Process new initial state.
+    vector<int> tmpS0;
+    for (int f : pattern) {
+        if (n->state[f]) {
+            tmpS0.push_back(f);
+        }
+    }
+    int s0Size = static_cast<int>(tmpS0.size());
+    restrictedModel->s0Size = s0Size;
+    if (s0Size == 0) {
+        restrictedModel->s0List = nullptr;
+    } else {
+        restrictedModel->s0List = new int[s0Size];
+        for (int i = 0; i < restrictedModel->s0Size; i++) {
+            restrictedModel->s0List[i] = factOrigToRestrictedMapping[tmpS0[i]];
+        }
+    }
+
     n->heuristicValue[index] = 0;
     n->goalReachable = true;
 }
@@ -131,6 +146,12 @@ void hhVariableRestriction::freeMemoryOfReusedProperties() const {
         restrictedModel->sccMaxSize = 0;
         restrictedModel->calculatedSccs = false;
     }
+
+    restrictedModel->intSet.reset();
+
+    // Reset initial state properties
+    restrictedModel->s0Size = 0;
+    delete[] restrictedModel->s0List;
 }
 
 Model* hhVariableRestriction::createRestrictedProblem(vector<int> pattern) {

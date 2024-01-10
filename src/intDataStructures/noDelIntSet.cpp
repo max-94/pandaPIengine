@@ -17,9 +17,6 @@ noDelIntSet::noDelIntSet() {
 }
 
 void noDelIntSet::init(int size) {
-    delete[] boolContainer;
-    delete[] intContainer;
-
 	this->boolContainer = new bool[size];
 	this->intContainer = new int[size];
 	this->containerSize = size;
@@ -32,6 +29,13 @@ void noDelIntSet::init(int size) {
 noDelIntSet::~noDelIntSet() {
 	delete[] boolContainer;
 	delete[] intContainer;
+}
+
+void noDelIntSet::reset() {
+    delete[] boolContainer;
+    delete[] intContainer;
+    containerSize = -1;
+    currentSize = -1;
 }
 
 noDelIntSet* noDelIntSet::clone() {
