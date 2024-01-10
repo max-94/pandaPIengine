@@ -22,6 +22,7 @@ private:
     // Required to compute action's precondition, add and delete lists.
     map<int, int> factOrigToRestrictedMapping;
     map<int, int> mutexOrigToRestrictedMapping;
+    int topMethodId = -1;
 
     void filterFactsInActionsWithPattern(int actionId, const int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists);
     void freeMemoryOfReusedProperties() const;

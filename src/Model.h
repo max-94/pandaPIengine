@@ -259,6 +259,7 @@ namespace progression {
             void calcTaskToMethodMapping();
             void calcDistinctSubtasksOfMethods();
 
+            void generateMethodRepresentation();
     private:
 			bool first = true;
 
@@ -268,8 +269,6 @@ namespace progression {
 			int *readIntList(string s, int &size);
 
 			tuple<int *, int *, int **> readConditionalIntList(string s, int &sizeA, int &sizeB, int *&sizeC);
-
-			void generateMethodRepresentation();
 
 			pair<planStep **, planStep **> initializeMethod(int method
 #ifdef TRACESOLUTION
