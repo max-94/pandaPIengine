@@ -25,8 +25,9 @@ private:
     int topMethodId = -1;
 
     void filterFactsInActionsWithPattern(int actionId, const int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists);
-    void freeMemoryOfReusedProperties() const;
-    Model* createRestrictedProblem(vector<int> pattern);
+    void deallocateRestrictedPlanningProblem() const;
+    Model* createRestrictedPlanningDomain(vector<int> pattern);
+    void createRestrictedPlanningProblem(progression::searchNode* n);
 };
 
 } /* namespace progression */

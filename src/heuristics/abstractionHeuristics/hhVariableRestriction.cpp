@@ -14,7 +14,7 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(
     std::sort(pattern.begin(), pattern.end());
 
     // Create restricted model based on given pattern.
-    restrictedModel = createRestrictedProblem(pattern);
+    restrictedModel = createRestrictedPlanningDomain(pattern);
 }
 
 hhVariableRestriction::~hhVariableRestriction() {
@@ -27,91 +27,21 @@ string hhVariableRestriction::getDescription() {
 }
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int action) {
-    freeMemoryOfReusedProperties();
+    deallocateRestrictedPlanningProblem();
     n->heuristicValue[index] = 0;
     n->goalReachable = true;
 }
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int absTask,
                                               int method) {
-    // Process new initial state.
-    vector<int> tmpS0;
-    for (int f : pattern) {
-        if (n->state[f]) {
-            tmpS0.push_back(f);
-        }
-    }
-    int s0Size = static_cast<int>(tmpS0.size());
-    restrictedModel->s0Size = s0Size;
-    if (s0Size == 0) {
-        restrictedModel->s0List = nullptr;
-    } else {
-        restrictedModel->s0List = new int[s0Size];
-        for (int i = 0; i < restrictedModel->s0Size; i++) {
-            restrictedModel->s0List[i] = factOrigToRestrictedMapping[tmpS0[i]];
-        }
-    }
-
-    // Process initial task network.
-    vector<int> tmpNetwork;
-    planStep* step = nullptr;
-    if (n->numAbstract > 0) {
-        step = n->unconstraintAbstract[0];
-    } else if (n->numPrimitive > 0) {
-        step = n->unconstraintPrimitive[0];
-    }
-
-    while (step != nullptr) {
-        tmpNetwork.push_back(step->task);
-
-        if (step->numSuccessors > 0) {
-            step = step->successorList[0];
-        } else {
-            step = nullptr;
-        }
-    }
-
-    int numSubtasks = static_cast<int>(tmpNetwork.size());
-    int numOrderings = (numSubtasks - 1) * 2;
-
-    // If no subtasks available, then we have found a goal state.
-    if (numSubtasks == 0) {
-        n->heuristicValue[index] = 0;
-        n->goalReachable = true;
-        return;
-    }
-
-    // Prepare arrays for initial task network.
-    restrictedModel->numSubTasks[topMethodId] = numSubtasks;
-    restrictedModel->numOrderings[topMethodId] = numOrderings;
-    restrictedModel->subTasks[topMethodId] = new int[numSubtasks];
-    restrictedModel->ordering[topMethodId] = new int[numOrderings];
-
-    for (int i = 0; i < numSubtasks; i++) {
-        restrictedModel->subTasks[topMethodId][i] = tmpNetwork[i];
-
-        if (i == numSubtasks - 1) continue;
-        restrictedModel->ordering[topMethodId][i*2] = i;
-        restrictedModel->ordering[topMethodId][(i*2)+1] = i+1;
-    }
-    vector<int>().swap(tmpNetwork);
-
-    // Call missing methods to finalize restricted model.
-    restrictedModel->calcTaskToMethodMapping();
-    restrictedModel->calcDistinctSubtasksOfMethods();
-    restrictedModel->generateMethodRepresentation();
-    auto restrictedRootSearchNode = restrictedModel->prepareTNi(restrictedModel);
-    // TODO: Nochmal genauer prüfen, ob wir diese Informationen brauchen.
-    //restrictedModel->calcSCCs();
-    //restrictedModel->calcSCCGraph();
-    //restrictedModel->updateReachability(restrictedRootSearchNode);
+    createRestrictedPlanningProblem(n);
 
     // TODO: Call search procedure with restricted model.
 
     n->heuristicValue[index] = 0;
     n->goalReachable = true;
 
-    freeMemoryOfReusedProperties();
+    deallocateRestrictedPlanningProblem();
 }
 
 void hhVariableRestriction::filterFactsInActionsWithPattern(
@@ -137,7 +67,7 @@ void hhVariableRestriction::filterFactsInActionsWithPattern(
     vector<int>().swap(tmpList);
 }
 
-void hhVariableRestriction::freeMemoryOfReusedProperties() const {
+void hhVariableRestriction::deallocateRestrictedPlanningProblem() const {
     // Free memory for method and subtask related stuff.
     delete[] restrictedModel->stToMethodNum;
     delete[] restrictedModel->numMethodsForTask;
@@ -216,7 +146,7 @@ void hhVariableRestriction::freeMemoryOfReusedProperties() const {
         delete[] restrictedModel->ordering[topMethodId];
 }
 
-Model* hhVariableRestriction::createRestrictedProblem(vector<int> pattern) {
+Model* hhVariableRestriction::createRestrictedPlanningDomain(vector<int> pattern) {
     auto model = new Model(true, mtrNO, true, true);
 
     // Process facts. Removing all facts that are not part of the given pattern.
@@ -367,5 +297,80 @@ Model* hhVariableRestriction::createRestrictedProblem(vector<int> pattern) {
         }
     }
     return model;
+}
+
+void hhVariableRestriction::createRestrictedPlanningProblem(progression::searchNode *n) {
+    // Process new initial state.
+    vector<int> tmpS0;
+    for (int f : pattern) {
+        if (n->state[f]) {
+            tmpS0.push_back(f);
+        }
+    }
+    int s0Size = static_cast<int>(tmpS0.size());
+    restrictedModel->s0Size = s0Size;
+    if (s0Size == 0) {
+        restrictedModel->s0List = nullptr;
+    } else {
+        restrictedModel->s0List = new int[s0Size];
+        for (int i = 0; i < restrictedModel->s0Size; i++) {
+            restrictedModel->s0List[i] = factOrigToRestrictedMapping[tmpS0[i]];
+        }
+    }
+
+    // Process initial task network.
+    vector<int> tmpNetwork;
+    planStep* step = nullptr;
+    if (n->numAbstract > 0) {
+        step = n->unconstraintAbstract[0];
+    } else if (n->numPrimitive > 0) {
+        step = n->unconstraintPrimitive[0];
+    }
+
+    while (step != nullptr) {
+        tmpNetwork.push_back(step->task);
+
+        if (step->numSuccessors > 0) {
+            step = step->successorList[0];
+        } else {
+            step = nullptr;
+        }
+    }
+
+    int numSubtasks = static_cast<int>(tmpNetwork.size());
+    int numOrderings = numSubtasks > 0 ? (numSubtasks - 1) * 2 : 0;
+
+    // If no subtasks available, then we have found a goal state.
+    //if (numSubtasks == 0) {
+    //    n->heuristicValue[index] = 0;
+    //    n->goalReachable = true;
+    //    return;
+    //}
+
+    // Prepare arrays for initial task network.
+    restrictedModel->numSubTasks[topMethodId] = numSubtasks;
+    restrictedModel->numOrderings[topMethodId] = numOrderings;
+    restrictedModel->subTasks[topMethodId] = new int[numSubtasks];
+    restrictedModel->ordering[topMethodId] = new int[numOrderings];
+
+    for (int i = 0; i < numSubtasks; i++) {
+        restrictedModel->subTasks[topMethodId][i] = tmpNetwork[i];
+
+        if (i == numSubtasks - 1) continue;
+        restrictedModel->ordering[topMethodId][i*2] = i;
+        restrictedModel->ordering[topMethodId][(i*2)+1] = i+1;
+    }
+    vector<int>().swap(tmpNetwork);
+
+    // Call missing methods to finalize restricted model.
+    restrictedModel->calcTaskToMethodMapping();
+    restrictedModel->calcDistinctSubtasksOfMethods();
+    restrictedModel->generateMethodRepresentation();
+    //auto restrictedRootSearchNode = restrictedModel->prepareTNi(restrictedModel);
+
+    // TODO: Nochmal genauer prüfen, ob wir diese Informationen brauchen.
+    //restrictedModel->calcSCCs();
+    //restrictedModel->calcSCCGraph();
+    //restrictedModel->updateReachability(restrictedRootSearchNode);
 }
 }
