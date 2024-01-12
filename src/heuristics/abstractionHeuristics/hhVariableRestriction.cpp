@@ -5,7 +5,7 @@ namespace progression {
 
 hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(htn, index) {
     // TODO: Replace with pattern selection procedure.
-    pattern = {3,0};
+    pattern = {3};
     // Verifying that each fact in pattern does exist.
     for (int fact : pattern) {
         assert(fact < htn->numStateBits);
@@ -140,14 +140,14 @@ void hhVariableRestriction::deallocateRestrictedPlanningProblem() const {
     delete[] restrictedModel->s0List;
 
     // Reset initial network properties
-    if (restrictedModel->subTasks[topMethodId] != nullptr)
-        delete[] restrictedModel->subTasks[topMethodId];
-    if (restrictedModel->ordering[topMethodId] != nullptr)
-        delete[] restrictedModel->ordering[topMethodId];
+    if (restrictedModel->subTasks[restrictedModel->numMethods - 1] != nullptr)
+        delete[] restrictedModel->subTasks[restrictedModel->numMethods - 1];
+    if (restrictedModel->ordering[restrictedModel->numMethods - 1] != nullptr)
+        delete[] restrictedModel->ordering[restrictedModel->numMethods - 1];
 }
 
 Model* hhVariableRestriction::createRestrictedPlanningDomain(vector<int> pattern) {
-    auto model = new Model(true, mtrNO, true, true);
+    auto model = new Model(true, mtrACTIONS, true, true);
 
     // Process facts. Removing all facts that are not part of the given pattern.
     model->numStateBits = static_cast<int>(pattern.size());
@@ -240,20 +240,27 @@ Model* hhVariableRestriction::createRestrictedPlanningDomain(vector<int> pattern
     // Copy methods. Every method except the top method can be copied. Top method must be created during search
     // for each node, because current state + network determine the initial state of the restricted problem.
     model->isHtnModel = true;
-    model->numTasks = htn->numTasks;
+    model->numTasks = htn->numTasks + 1;
 
     model->taskNames = new string[model->numTasks];
     model->emptyMethod = new int[model->numTasks];
     model->isPrimitive = new bool[model->numTasks];
 
     for (int i = 0; i < model->numTasks; i++) {
+        if (i == model->numTasks - 1) {
+            model->taskNames[i] = "__restrictedTop[]";
+            model->emptyMethod[i] = false; // TODO Ist das korrekt?
+            model->isPrimitive[i] = false;
+            continue;
+        }
+
         model->taskNames[i] = htn->taskNames[i];
         model->emptyMethod[i] = htn->emptyMethod[i];
         model->isPrimitive[i] = htn->isPrimitive[i];
     }
 
-    model->initialTask = htn->initialTask;
-    model->numMethods = htn->numMethods;
+    model->initialTask = model->numTasks - 1;
+    model->numMethods = htn->numMethods + 1;
     model->decomposedTask = new int[model->numMethods];
     model->numSubTasks = new int[model->numMethods];
     model->subTasks = new int*[model->numMethods];
@@ -268,19 +275,20 @@ Model* hhVariableRestriction::createRestrictedPlanningDomain(vector<int> pattern
     model->isParallelSequences = htn->isParallelSequences;
 
     for (int i = 0; i < model->numMethods; i++) {
-        model->methodNames[i] = htn->methodNames[i];
-        model->decomposedTask[i] = htn->decomposedTask[i];
-
-        // Do not copy initial task network from original problem. Must be set by each search node individually.
-        if (model->decomposedTask[i] == model->initialTask) {
-            topMethodId = i;
+        if (i == model->numMethods - 1) {
+            model->decomposedTask[i] = model->initialTask;
             model->numSubTasks[i] = 0;
             model->subTasks[i] = nullptr;
-
             model->numOrderings[i] = 0;
             model->ordering[i] = nullptr;
+            model->methodNames[i] = "m__restrictedTop[]";
+            model->methodIsTotallyOrdered[i] = true;
+            model->methodTotalOrder[i] = nullptr;
             continue;
         }
+
+        model->methodNames[i] = htn->methodNames[i];
+        model->decomposedTask[i] = htn->decomposedTask[i];
 
         const int numSubTasks = htn->numSubTasks[i];
         model->numSubTasks[i] = numSubTasks;
@@ -340,25 +348,18 @@ void hhVariableRestriction::createRestrictedPlanningProblem(progression::searchN
     int numSubtasks = static_cast<int>(tmpNetwork.size());
     int numOrderings = numSubtasks > 0 ? (numSubtasks - 1) * 2 : 0;
 
-    // If no subtasks available, then we have found a goal state.
-    //if (numSubtasks == 0) {
-    //    n->heuristicValue[index] = 0;
-    //    n->goalReachable = true;
-    //    return;
-    //}
-
     // Prepare arrays for initial task network.
-    restrictedModel->numSubTasks[topMethodId] = numSubtasks;
-    restrictedModel->numOrderings[topMethodId] = numOrderings;
-    restrictedModel->subTasks[topMethodId] = new int[numSubtasks];
-    restrictedModel->ordering[topMethodId] = new int[numOrderings];
-
+    const int restrictedInitialMethod = restrictedModel->numMethods - 1;
+    restrictedModel->numSubTasks[restrictedInitialMethod] = numSubtasks;
+    restrictedModel->numOrderings[restrictedInitialMethod] = numOrderings;
+    restrictedModel->subTasks[restrictedInitialMethod] = new int[numSubtasks];
+    restrictedModel->ordering[restrictedInitialMethod] = new int[numOrderings];
     for (int i = 0; i < numSubtasks; i++) {
-        restrictedModel->subTasks[topMethodId][i] = tmpNetwork[i];
+        restrictedModel->subTasks[restrictedInitialMethod][i] = tmpNetwork[i];
 
         if (i == numSubtasks - 1) continue;
-        restrictedModel->ordering[topMethodId][i*2] = i;
-        restrictedModel->ordering[topMethodId][(i*2)+1] = i+1;
+        restrictedModel->ordering[restrictedInitialMethod][i*2] = i;
+        restrictedModel->ordering[restrictedInitialMethod][(i*2)+1] = i+1;
     }
     vector<int>().swap(tmpNetwork);
 

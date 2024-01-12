@@ -231,7 +231,26 @@ int main(int argc, char *argv[]) {
 	htn->read(inputStream);
 	assert(htn->isHtnModel);
 	searchNode* tnI = htn->prepareTNi(htn);
-			
+
+    /*
+    Model* htnOrig = new Model(trackContainedTasks, reachability, true, true);
+    htnOrig->filename = inputFilename;
+    if (args_info.satmutexes_flag) htnOrig->rintanenInvariants = true;
+    htnOrig->read(inputStream);
+    assert(htnOrig->isHtnModel);
+    searchNode* tnIOrig = htnOrig->prepareTNi(htnOrig);
+
+    auto dummy = new hhVariableRestriction(htnOrig, 0);
+    Model* htn = dummy->restrictedModel;
+    dummy->createRestrictedPlanningProblem(tnIOrig);
+    auto tnI = htn->prepareTNi(htn);
+
+    cout << "=======" << endl;
+    htnOrig->print();
+    cout << "=======" << endl;
+    htn->print();
+    */
+
 	if (inputFilename != "-") ((ifstream*) inputStream)->close();
 
 	if (args_info.writeInputToHDDL_given){
@@ -484,6 +503,7 @@ int main(int argc, char *argv[]) {
 				args_info.realCosts_flag);
 	}
 
+    //delete htnOrig;
     delete htn;
 	return 0;
 }

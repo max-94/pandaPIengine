@@ -17,17 +17,17 @@ public:
     void setHeuristicValue(searchNode *n, searchNode *parent, int action) override;
     void setHeuristicValue(searchNode *n, searchNode *parent, int absTask, int method) override;
 
+    void createRestrictedPlanningProblem(progression::searchNode* n);
+
 private:
     // We have to keep the mapping from original variable id to new id in restricted model.
     // Required to compute action's precondition, add and delete lists.
     map<int, int> factOrigToRestrictedMapping;
     map<int, int> mutexOrigToRestrictedMapping;
-    int topMethodId = -1;
 
     void filterFactsInActionsWithPattern(int actionId, const int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists);
     void deallocateRestrictedPlanningProblem() const;
     Model* createRestrictedPlanningDomain(vector<int> pattern);
-    void createRestrictedPlanningProblem(progression::searchNode* n);
 };
 
 } /* namespace progression */

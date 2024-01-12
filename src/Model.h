@@ -260,6 +260,8 @@ namespace progression {
             void calcDistinctSubtasksOfMethods();
 
             void generateMethodRepresentation();
+
+            void print();
     private:
 			bool first = true;
 

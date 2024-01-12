@@ -3000,4 +3000,10 @@ namespace progression {
 		}
 	}
 
+    void Model::print() {
+        printSummary();
+        printActions();
+        printMethods();
+    }
+
 	/* namespace progression */
