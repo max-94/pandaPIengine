@@ -5,7 +5,7 @@ namespace progression {
 
 hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(htn, index) {
     // TODO: Replace with pattern selection procedure.
-    pattern = {3};
+    pattern = {0,1,2,3,4,5,6,7,8,9,10};
     // Verifying that each fact in pattern does exist.
     for (int fact : pattern) {
         assert(fact < htn->numStateBits);
@@ -32,8 +32,7 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
     n->goalReachable = true;
 }
 
-void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int absTask,
-                                              int method) {
+void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int absTask, int method) {
     createRestrictedPlanningProblem(n);
 
     // TODO: Call search procedure with restricted model.
@@ -44,9 +43,8 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
     deallocateRestrictedPlanningProblem();
 }
 
-void hhVariableRestriction::filterFactsInActionsWithPattern(
-    const int actionId, const int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists
-) {
+
+void hhVariableRestriction::filterFactsInActionsWithPattern(const int actionId, const int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists) {
     vector<int> tmpList;
     for (int j = 0; j < htnNumList[actionId]; j++) {
         int element = htnFactLists[actionId][j];

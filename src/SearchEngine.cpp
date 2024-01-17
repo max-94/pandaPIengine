@@ -43,6 +43,7 @@
 #include "VisitedList.h"
 
 #include "cmdline.h"
+#include "abstractionHeuristics/RestrictedHTNModelFactory.h"
 
 using namespace std;
 using namespace progression;
@@ -225,7 +226,8 @@ int main(int argc, char *argv[]) {
     // todo: the correct value of maintainTaskRechability depends on the heuristic
     eMaintainTaskReachability reachability = mtrACTIONS;
 	bool trackContainedTasks = useTaskHash;
-    Model* htn = new Model(trackContainedTasks, reachability, true, true);
+
+    auto htn = new Model(trackContainedTasks, reachability, true, true);
 	htn->filename = inputFilename;
 	if (args_info.satmutexes_flag) htn->rintanenInvariants = true;
 	htn->read(inputStream);
@@ -233,7 +235,13 @@ int main(int argc, char *argv[]) {
 	searchNode* tnI = htn->prepareTNi(htn);
 
     /*
-    Model* htnOrig = new Model(trackContainedTasks, reachability, true, true);
+    // TODO Remove when done.
+    auto r = new RestrictedHTNModelFactory(htn, {3});
+    delete r;
+    */
+
+    /*
+    auto htnOrig = new Model(trackContainedTasks, reachability, true, true);
     htnOrig->filename = inputFilename;
     if (args_info.satmutexes_flag) htnOrig->rintanenInvariants = true;
     htnOrig->read(inputStream);
@@ -250,6 +258,7 @@ int main(int argc, char *argv[]) {
     cout << "=======" << endl;
     htn->print();
     */
+    // TODO End remove.
 
 	if (inputFilename != "-") ((ifstream*) inputStream)->close();
 
@@ -503,6 +512,7 @@ int main(int argc, char *argv[]) {
 				args_info.realCosts_flag);
 	}
 
+    // TODO Remove when done.
     //delete htnOrig;
     delete htn;
 	return 0;
