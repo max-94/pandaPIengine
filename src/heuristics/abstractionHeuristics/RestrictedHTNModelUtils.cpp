@@ -1,11 +1,12 @@
 #include "RestrictedHTNModelUtils.h"
 
 namespace progression {
-    int** orderSubTasks(Model *model) {
-        int **orderedSubTasks = new int *[model->numMethods];
+    vector<vector<int>> orderSubTasks(Model *model) {
+        vector<vector<int>> orderedSubTasks(model->numMethods);
+        //int **orderedSubTasks = new int *[model->numMethods];
 
         for (int l = 0; l < model->numMethods; l++) {
-            orderedSubTasks[l] = new int[model->numSubTasks[l]]{0};
+            //orderedSubTasks[l] = new int[model->numSubTasks[l]]{0};
             int numSubTasks = model->numSubTasks[l];
 
             // Step 1 - Construct an incident matrix using the given ordering
@@ -95,7 +96,7 @@ namespace progression {
             }
 
             reverse(orderedSubTask.begin(), orderedSubTask.end());
-            copy(orderedSubTask.begin(), orderedSubTask.end(), orderedSubTasks[l]);
+            orderedSubTasks[l] = orderedSubTask;
 
             for (int i = 0; i < numSubTasks; i++) {
                 delete[] adjacentmatrix[i];

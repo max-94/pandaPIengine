@@ -4,7 +4,7 @@
 #include "../../Model.h"
 
 namespace progression {
-    int** orderSubTasks(Model* model);
+    vector<vector<int>> orderSubTasks(Model* model);
 }
 
 #endif //PANDAPIENGINE_RESTRICTEDHTNMODELUTILS_H

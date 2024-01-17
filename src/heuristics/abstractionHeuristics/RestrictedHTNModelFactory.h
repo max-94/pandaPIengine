@@ -55,17 +55,19 @@ private:
     // Properties to store basic information of original HTN model.
     map<int, Fact> factMapping;
     map<int, Variable> variableMapping;
-    map<int, Task> taskMapping;
-    map<int, Action> actionMapping;
-    map<int, Method> methodMapping;
+
+    vector<Action> actions;
+    vector<Task> tasks;
+    vector<Method> methods;
+    vector<vector<int>> taskToMethods;
+
     vector<int> goal;
 
     // Properties to keep track what was removed.
+    // TODO: Vielleicht nicht als Class Properties notwendig.
     vector<bool> removedFacts;
     vector<bool> removedMethods;
     vector<bool> removedTasks;
-
-    vector<vector<int>> taskToMethods;
 
     // Helper functions.
     vector<int> extractFacts(int lengthList, const int* factList);
