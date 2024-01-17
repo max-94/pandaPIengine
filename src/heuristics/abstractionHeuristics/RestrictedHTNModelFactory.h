@@ -59,6 +59,7 @@ private:
     vector<Action> actions;
     vector<Task> tasks;
     vector<Method> methods;
+    // TODO: property vielleicht in struct auslagern?
     vector<vector<int>> taskToMethods;
 
     vector<int> goal;

@@ -11,7 +11,7 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
     // Process facts.
     removedFacts = vector<bool>(htn->numStateBits, true);
     for (int f = 0; f < pattern.size(); f++) {
-        removedFacts[f] = false;
+        removedFacts[pattern[f]] = false;
 
         Fact fact{};
         fact.id = f;
@@ -39,7 +39,7 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
         v.lastIndex = it->second.back();
         v.name = htn->varNames[it->first];
         for (int j = v.firstIndex; j <= v.lastIndex; j++) {
-            factMapping[j].variableId = variableCounter;
+            factMapping[pattern[j]].variableId = variableCounter;
         }
         variableMapping[it->first] = v;
         it++;
