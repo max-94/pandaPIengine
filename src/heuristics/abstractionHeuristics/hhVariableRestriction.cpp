@@ -306,6 +306,7 @@ Model* hhVariableRestriction::createRestrictedPlanningDomain(vector<int> pattern
 }
 
 void hhVariableRestriction::createRestrictedPlanningProblem(progression::searchNode *n) {
+    counter++;
     // Process new initial state.
     vector<int> tmpS0;
     for (int f : pattern) {
@@ -365,11 +366,21 @@ void hhVariableRestriction::createRestrictedPlanningProblem(progression::searchN
     restrictedModel->calcTaskToMethodMapping();
     restrictedModel->calcDistinctSubtasksOfMethods();
     restrictedModel->generateMethodRepresentation();
-    //auto restrictedRootSearchNode = restrictedModel->prepareTNi(restrictedModel);
 
-    // TODO: Nochmal genauer prüfen, ob wir diese Informationen brauchen.
-    //restrictedModel->calcSCCs();
-    //restrictedModel->calcSCCGraph();
-    //restrictedModel->updateReachability(restrictedRootSearchNode);
+    cout << endl;
+    cout << "============================================" << endl;
+    cout << endl;
+    restrictedModel->print();
+
+    cout << "Huhu" << endl;
+
+    // TODO: Geht nicht wegen nicht erreichbaren Tasks.
+    /*
+    auto restrictedRootSearchNode = restrictedModel->prepareTNi(restrictedModel);
+    restrictedModel->calcSCCs();
+    restrictedModel->calcSCCGraph();
+    restrictedModel->updateReachability(restrictedRootSearchNode);
+    delete restrictedRootSearchNode;
+    */
 }
 }

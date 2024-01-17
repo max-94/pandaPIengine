@@ -1,6 +1,8 @@
 #ifndef PANDAPIENGINE_RESTRICTEDHTNMODELFACTORY_H
 #define PANDAPIENGINE_RESTRICTEDHTNMODELFACTORY_H
 
+#include <cassert>
+
 #include "../../Model.h"
 #include "RestrictedHTNModelUtils.h"
 
@@ -23,7 +25,7 @@ struct Task {
     int id;
     string name;
     bool isPrimitive;
-    int numMethods;
+    vector<int>::size_type numMethods;
 };
 
 struct Action {
@@ -44,7 +46,7 @@ struct Method {
 class RestrictedHTNModelFactory {
 public:
     RestrictedHTNModelFactory(Model* htn, vector<int> pattern); //
-    ~RestrictedHTNModelFactory();
+    ~RestrictedHTNModelFactory() = default;
 
     Model* getRestrictedHTNModel(progression::searchNode *n);
 private:
@@ -59,10 +61,13 @@ private:
     vector<int> goal;
 
     // Properties to keep track what was removed.
+    vector<bool> removedFacts;
     vector<bool> removedMethods;
     vector<bool> removedTasks;
-    //vector<int> numMethods;
 
+    vector<vector<int>> taskToMethods;
+
+    // Helper functions.
     vector<int> extractFacts(int lengthList, const int* factList);
     vector<int> extractSubtask(int numSubtasks, const int* subtasks);
 };

@@ -28,6 +28,8 @@ private:
     void filterFactsInActionsWithPattern(int actionId, const int* htnNumList, int** htnFactLists, int* restrictedNumList, int** restrictedFactLists);
     void deallocateRestrictedPlanningProblem() const;
     Model* createRestrictedPlanningDomain(vector<int> pattern);
+
+    int counter = 0;
 };
 
 } /* namespace progression */

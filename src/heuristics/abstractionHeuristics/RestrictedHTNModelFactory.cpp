@@ -1,11 +1,23 @@
 #include "RestrictedHTNModelFactory.h"
 
 RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, vector<int> pattern) {
+    // Process pattern. Verify that it is valid and sort it.
+    for (int fact : pattern) {
+        assert(fact < htn->numStateBits);
+    }
+    sort(pattern.begin(), pattern.end());
     this->pattern = pattern;
 
     // Process facts.
+    removedFacts = vector<bool>(htn->numStateBits, true);
     for (int f = 0; f < pattern.size(); f++) {
-        factMapping[pattern[f]] = {f, htn->factStrs[pattern[f]], -1};
+        removedFacts[f] = false;
+
+        Fact fact{};
+        fact.id = f;
+        fact.name = htn->factStrs[pattern[f]];
+        fact.variableId = -1;
+        factMapping[pattern[f]] = fact;
     }
 
     // Process goal
@@ -61,7 +73,8 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
 
     // Process methods.
     removedMethods = vector<bool>(htn->numMethods, false);
-    vector<int> numMethods(htn->numTasks - htn->numActions, 0);
+    taskToMethods = vector<vector<int>>(htn->numTasks);
+    //vector<int> numMethods(htn->numTasks, 0);
     int methodCounter = 0;
     int** orderedSubtasks = orderSubTasks(htn);
 
@@ -81,7 +94,8 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
         method.subtasks = subtasks;
         methodMapping[m] = method;
 
-        numMethods[htn->decomposedTask[m] - htn->numActions]++;
+        taskToMethods[htn->decomposedTask[m]].push_back(m);
+        //numMethods[htn->decomposedTask[m]]++;
         delete[] orderedSubtasks[m];
     }
     delete[] orderedSubtasks;
@@ -102,7 +116,7 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
             task.numMethods = 0;
             taskMapping[t] = task;
         } else {
-            if (numMethods[t - htn->numActions] == 0) {
+            if (taskToMethods[t].empty()) {
                 cout << "Task " << t << " ha no methods and will be removed!" << endl;
                 removedTasks[t] = true;
                 continue;
@@ -112,14 +126,46 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
             task.id = taskCounter++;
             task.name = htn->taskNames[t];
             task.isPrimitive = false;
-            task.numMethods = numMethods[t - htn->numActions];
+            task.numMethods = taskToMethods[t].size();
             taskMapping[t] = task;
         }
     }
+}
 
-    cout << "Huhu" << endl;
+Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode *n) {
+    auto restrictedModel = new Model(true, mtrACTIONS, true, true);
+    restrictedModel->isHtnModel = true;
 
-    // TODO: Extract to own method?
+    // Extract initial task network from current search node.
+    vector<int> initialTaskNetwork;
+    planStep* step = nullptr;
+    if (n->numAbstract > 0) {
+        step = n->unconstraintAbstract[0];
+    } else if (n->numPrimitive > 0) {
+        step = n->unconstraintPrimitive[0];
+    }
+
+    while (step != nullptr) {
+        initialTaskNetwork.push_back(step->task);
+
+        if (step->numSuccessors > 0) {
+            step = step->successorList[0];
+        } else {
+            step = nullptr;
+        }
+    }
+
+    // TODO: Calculate task reachability from tni --> New Task Object
+    int numTasks = static_cast<int>(taskMapping.size());
+    vector<bool> taskReachable(numTasks, false);
+    FlexIntStack stack{};
+    stack.init(numTasks);
+
+    for (int t : initialTaskNetwork) {
+        stack.push(t);
+        taskReachable[t] = true;
+    }
+
     /*
     // Process methods
     // (1) Count how many methods an abstract task has.
@@ -153,15 +199,18 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
         }
     } while (methodBecameEmpty);
     */
-}
 
-RestrictedHTNModelFactory::~RestrictedHTNModelFactory() {
 
-}
+    cout << "Huhu" << endl;
 
-Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode *n) {
-    auto restrictedModel = new Model(true, mtrACTIONS, true, true);
-    restrictedModel->isHtnModel = true;
+    // TODO: Set facts
+    // TODO: Set variables
+    // TODO: Set available actions
+    // TODO: Set available methods
+    // TODO: Set available tasks
+    // TODO: Set s0
+    // TODO: Set goal
+    // TODO: Call all further model methods
 
     return restrictedModel;
 }
