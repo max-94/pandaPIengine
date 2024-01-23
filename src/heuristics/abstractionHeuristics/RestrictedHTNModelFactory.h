@@ -53,6 +53,7 @@ private:
     vector<int> pattern;
 
     // Properties to store basic information of original HTN model.
+    int initialTask;
     map<int, Fact> factMapping;
     map<int, Variable> variableMapping;
 

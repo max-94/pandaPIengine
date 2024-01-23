@@ -234,32 +234,6 @@ int main(int argc, char *argv[]) {
 	assert(htn->isHtnModel);
 	searchNode* tnI = htn->prepareTNi(htn);
 
-    /*
-    // TODO Remove when done.
-    auto r = new RestrictedHTNModelFactory(htn, {3});
-    delete r;
-    */
-
-    /*
-    auto htnOrig = new Model(trackContainedTasks, reachability, true, true);
-    htnOrig->filename = inputFilename;
-    if (args_info.satmutexes_flag) htnOrig->rintanenInvariants = true;
-    htnOrig->read(inputStream);
-    assert(htnOrig->isHtnModel);
-    searchNode* tnIOrig = htnOrig->prepareTNi(htnOrig);
-
-    auto dummy = new hhVariableRestriction(htnOrig, 0);
-    Model* htn = dummy->restrictedModel;
-    dummy->createRestrictedPlanningProblem(tnIOrig);
-    auto tnI = htn->prepareTNi(htn);
-
-    cout << "=======" << endl;
-    htnOrig->print();
-    cout << "=======" << endl;
-    htn->print();
-    */
-    // TODO End remove.
-
 	if (inputFilename != "-") ((ifstream*) inputStream)->close();
 
 	if (args_info.writeInputToHDDL_given){
@@ -283,8 +257,6 @@ int main(int argc, char *argv[]) {
         // add reachability information to initial task network
         htn->updateReachability(tnI);
     }
-
-    // Heuristic *hLMC = new hhLMCount(htn, 0, tnI, lmfFD);
 
 	planningAlgorithm algo = PROGRESSION;
 	if (args_info.progression_given) algo = PROGRESSION;
@@ -512,8 +484,6 @@ int main(int argc, char *argv[]) {
 				args_info.realCosts_flag);
 	}
 
-    // TODO Remove when done.
-    //delete htnOrig;
     delete htn;
 	return 0;
 }

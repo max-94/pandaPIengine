@@ -84,6 +84,8 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
 
         tasks[htn->decomposedTask[m]].methods.push_back(m);
     }
+
+    initialTask = htn->initialTask;
 }
 
 Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode *n) {
@@ -93,6 +95,11 @@ Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode 
 
     vector<int> initialTaskNetwork = computeInitTaskNetwork(n);
     vector<bool> taskReachable = computeTaskReachability(initialTaskNetwork, numActions, numAbstracts, numMethods);
+    if (!taskReachable[initialTask]) {
+        taskReachable[initialTask] = true;
+        numAbstracts++;
+        numMethods++;
+    }
 
     auto model = new Model(true, mtrACTIONS, true, true);
     model->isHtnModel = true;
@@ -171,6 +178,10 @@ Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode 
     for (const Task& task : tasks) {
         if (!taskReachable[task.id]) continue;
 
+        if (task.name == "__top[]") {
+            model->initialTask = taskCounter;
+        }
+
         taskMapping[task.id] = taskCounter;
 
         model->taskNames[taskCounter] = task.name;
@@ -194,15 +205,13 @@ Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode 
             }
         }
 
-        if (task.name == "__top[]") {
-            model->initialTask = taskCounter;
-        }
-
         taskCounter++;
     }
 
     // Set available methods
     model->isTotallyOrdered = true;
+    model->isUniquePaths = true;
+    model->isParallelSequences = true;
     model->numMethods = numMethods;
     model->decomposedTask = new int[numMethods];
     model->numSubTasks = new int[numMethods];
@@ -215,11 +224,17 @@ Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode 
 
     int methodCounter = 0;
     for (const Method& method : methods) {
+        if (!taskReachable[method.decomposedTask]) continue;
+
         model->decomposedTask[methodCounter] = taskMapping[method.decomposedTask];
         model->methodNames[methodCounter] = method.name;
 
-        // TODO: Replace __top only if initial task network does not equal to {initial task}.
-        copyVectorIntoArray(method.subtasks, model->numSubTasks[methodCounter], model->subTasks[methodCounter]);
+        // Replace initial abstract task only if initial task network does not equal to {initial task}.
+        if (method.decomposedTask == initialTask && initialTaskNetwork != vector<int>({model->initialTask})) {
+            copyVectorIntoArray(initialTaskNetwork, model->numSubTasks[methodCounter], model->subTasks[methodCounter]);
+        } else {
+            copyVectorIntoArray(method.subtasks, model->numSubTasks[methodCounter], model->subTasks[methodCounter]);
+        }
 
         int numSubtasks = model->numSubTasks[methodCounter];
         int numOrderings = numSubtasks > 0 ? (numSubtasks - 1) * 2 : 0;
