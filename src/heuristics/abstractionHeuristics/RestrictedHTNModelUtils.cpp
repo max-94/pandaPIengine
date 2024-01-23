@@ -3,10 +3,8 @@
 namespace progression {
     vector<vector<int>> orderSubTasks(Model *model) {
         vector<vector<int>> orderedSubTasks(model->numMethods);
-        //int **orderedSubTasks = new int *[model->numMethods];
 
         for (int l = 0; l < model->numMethods; l++) {
-            //orderedSubTasks[l] = new int[model->numSubTasks[l]]{0};
             int numSubTasks = model->numSubTasks[l];
 
             // Step 1 - Construct an incident matrix using the given ordering
@@ -107,5 +105,40 @@ namespace progression {
         }
 
         return orderedSubTasks;
+    }
+
+    vector<int> computeInitTaskNetwork(progression::searchNode* n) {
+        vector<int> initialTaskNetwork;
+        planStep* step = nullptr;
+        if (n->numAbstract > 0) {
+            step = n->unconstraintAbstract[0];
+        } else if (n->numPrimitive > 0) {
+            step = n->unconstraintPrimitive[0];
+        }
+
+        while (step != nullptr) {
+            initialTaskNetwork.push_back(step->task);
+
+            if (step->numSuccessors > 0) {
+                step = step->successorList[0];
+            } else {
+                step = nullptr;
+            }
+        }
+
+        return initialTaskNetwork;
+    }
+
+    void copyVectorIntoArray(const vector<int>& from, int& toNum, int*& to) {
+        int listSize = static_cast<int>(from.size());
+        toNum = listSize;
+        if (listSize == 0) {
+            to = nullptr;
+        } else {
+            to = new int[listSize];
+            for (int j = 0; j < listSize; j++) {
+                to[j] = from[j];
+            }
+        }
     }
 }

@@ -25,7 +25,7 @@ struct Task {
     int id;
     string name;
     bool isPrimitive;
-    vector<int>::size_type numMethods;
+    vector<int> methods;
 };
 
 struct Action {
@@ -59,20 +59,12 @@ private:
     vector<Action> actions;
     vector<Task> tasks;
     vector<Method> methods;
-    // TODO: property vielleicht in struct auslagern?
-    vector<vector<int>> taskToMethods;
 
     vector<int> goal;
 
-    // Properties to keep track what was removed.
-    // TODO: Vielleicht nicht als Class Properties notwendig.
-    vector<bool> removedFacts;
-    vector<bool> removedMethods;
-    vector<bool> removedTasks;
-
     // Helper functions.
+    vector<bool> computeTaskReachability(const vector<int>& tni, int& numActions, int& numAbstracts, int& numMethods);
     vector<int> extractFacts(int lengthList, const int* factList);
-    vector<int> extractSubtask(int numSubtasks, const int* subtasks);
 };
 }
 

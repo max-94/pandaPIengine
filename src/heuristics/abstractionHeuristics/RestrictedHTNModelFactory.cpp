@@ -9,10 +9,7 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
     this->pattern = pattern;
 
     // Process facts.
-    removedFacts = vector<bool>(htn->numStateBits, true);
     for (int f = 0; f < pattern.size(); f++) {
-        removedFacts[pattern[f]] = false;
-
         Fact fact{};
         fact.id = f;
         fact.name = htn->factStrs[pattern[f]];
@@ -69,13 +66,12 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
         task.id = t;
         task.name = htn->taskNames[t];
         task.isPrimitive = t < htn->numActions;
-        task.numMethods = 0;
+        task.methods = vector<int>();
         tasks[t] = task;
     }
 
     // Process methods.
     methods = vector<Method>(htn->numMethods);
-    taskToMethods = vector<vector<int>>(htn->numTasks);
     vector<vector<int>> orderedSubtasks = orderSubTasks(htn);
 
     for (int m = 0; m < htn->numMethods; m++) {
@@ -86,92 +82,174 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
         method.subtasks = orderedSubtasks[m];
         methods[m] = method;
 
-        taskToMethods[htn->decomposedTask[m]].push_back(m);
-        tasks[htn->decomposedTask[m]].numMethods++;
+        tasks[htn->decomposedTask[m]].methods.push_back(m);
     }
 }
 
 Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode *n) {
-    auto restrictedModel = new Model(true, mtrACTIONS, true, true);
-    restrictedModel->isHtnModel = true;
+    int numActions = 0;
+    int numAbstracts = 0;
+    int numMethods = 0;
 
-    // Extract initial task network from current search node.
-    vector<int> initialTaskNetwork;
-    planStep* step = nullptr;
-    if (n->numAbstract > 0) {
-        step = n->unconstraintAbstract[0];
-    } else if (n->numPrimitive > 0) {
-        step = n->unconstraintPrimitive[0];
+    vector<int> initialTaskNetwork = computeInitTaskNetwork(n);
+    vector<bool> taskReachable = computeTaskReachability(initialTaskNetwork, numActions, numAbstracts, numMethods);
+
+    auto model = new Model(true, mtrACTIONS, true, true);
+    model->isHtnModel = true;
+
+    int numStateBits = static_cast<int>(factMapping.size());
+    int numVars = static_cast<int>(variableMapping.size());
+
+    // Set facts
+    model->numStateBits = numStateBits;
+    model->factStrs = new string[numStateBits];
+    model->varOfStateBit = new int[numStateBits];
+    for (const pair<const int, Fact>& f : factMapping) {
+        model->factStrs[f.second.id] = f.second.name;
+        model->varOfStateBit[f.second.id] = f.second.variableId;
     }
 
-    while (step != nullptr) {
-        initialTaskNetwork.push_back(step->task);
+    // Set variables
+    model->numVars = numVars;
+    model->firstIndex = new int[numVars];
+    model->lastIndex = new int[numVars];
+    model->varNames = new string[numVars];
+    for (const pair<const int, Variable>& v : variableMapping) {
+        model->varNames[v.second.id] = v.second.name;
+        model->firstIndex[v.second.id] = v.second.firstIndex;
+        model->lastIndex[v.second.id] = v.second.lastIndex;
+    }
 
-        if (step->numSuccessors > 0) {
-            step = step->successorList[0];
-        } else {
-            step = nullptr;
+    // Set s0
+    vector<int> s0;
+    for (int f : pattern) {
+        if (n->state[f]) {
+            s0.push_back(f);
+        }
+    }
+    int s0Size = static_cast<int>(s0.size());
+    model->s0Size = s0Size;
+    if (s0Size == 0) {
+        model->s0List = nullptr;
+    } else {
+        model->s0List = new int[s0Size];
+        for (int i = 0; i < model->s0Size; i++) {
+            model->s0List[i] = factMapping[s0[i]].id;
         }
     }
 
-    // TODO: Calculate task reachability from tni --> New Task Object
-    int numTasks = static_cast<int>(tasks.size());
-    vector<bool> taskReachable(numTasks, false);
-    FlexIntStack stack{};
-    stack.init(numTasks);
-
-    for (int t : initialTaskNetwork) {
-        stack.push(t);
-        taskReachable[t] = true;
+    // Set goal
+    int goalSize = static_cast<int>(goal.size());
+    model->gSize = goalSize;
+    if (goalSize == 0) {
+        model->gList = nullptr;
+    } else {
+        model->gList = new int[goalSize];
+        for (int i = 0; i < goalSize; i++) {
+            model->gList[i] = goal[i];
+        }
     }
 
-    /*
-    // Process methods
-    // (1) Count how many methods an abstract task has.
-    int numAbstractTasks = htn->numTasks - htn->numActions;
-    int numActions = htn->numActions;
-    vector<int> numMethods(numAbstractTasks, 0);
-    for (int m = 0; m < htn->numMethods; m++) {
-        numMethods[htn->decomposedTask[m] - numActions]++;
-    }
+    // Set available tasks
+    int numTasks = numActions + numAbstracts;
+    model->numTasks = numTasks;
+    model->taskNames = new string[numTasks];
+    model->emptyMethod = new int[numTasks];
+    model->isPrimitive = new bool[numTasks];
 
-    vector<bool> removedMethod(htn->numMethods, false);
-    bool methodBecameEmpty;
-    do {
-        methodBecameEmpty = false;
-        for (int m = 0; m < htn->numMethods; m++) {
-            if (removedMethod[m]) continue;
+    model->numActions = numActions;
+    model->actionCosts = new int[numActions];
+    model->numPrecs = new int[numActions];
+    model->precLists = new int*[numActions];
+    model->numAdds = new int[numActions];
+    model->addLists = new int*[numActions];
+    model->numDels = new int[numActions];
+    model->delLists = new int*[numActions];
 
-            bool hasSubtask = false;
-            for (int st = 0; st < htn->numSubTasks[m]; st++) {
-                if (!emptyTask[htn->subTasks[m][st]]) {
-                    hasSubtask = true;
-                    break;
-                }
-            }
+    map<int, int> taskMapping{}; // Mapping original index to restricted index.
+    int taskCounter = 0;
+    for (const Task& task : tasks) {
+        if (!taskReachable[task.id]) continue;
 
-            if (!hasSubtask) {
-                numMethods[htn->decomposedTask[m] - numActions]--;
-                removedMethod[m] = true;
-                methodBecameEmpty = true;
+        taskMapping[task.id] = taskCounter;
+
+        model->taskNames[taskCounter] = task.name;
+        model->emptyMethod[taskCounter] = 0;
+        model->isPrimitive[taskCounter] = task.isPrimitive;
+
+        if (task.isPrimitive) {
+            Action& action = actions[task.id];
+
+            model->actionCosts[taskCounter] = action.costs;
+            model->numPrecs[taskCounter] = static_cast<int>(action.preconditions.size());
+            model->numAdds[taskCounter] = static_cast<int>(action.addEffects.size());
+            model->numDels[taskCounter] = static_cast<int>(action.deleteEffects.size());
+
+            copyVectorIntoArray(action.preconditions, model->numPrecs[taskCounter], model->precLists[taskCounter]);
+            copyVectorIntoArray(action.addEffects, model->numAdds[taskCounter], model->addLists[taskCounter]);
+            copyVectorIntoArray(action.deleteEffects, model->numDels[taskCounter], model->delLists[taskCounter]);
+
+            if (model->numPrecs[taskCounter] == 0) {
+                model->numPrecLessActions++;
             }
         }
-    } while (methodBecameEmpty);
-    */
 
+        if (task.name == "__top[]") {
+            model->initialTask = taskCounter;
+        }
 
-    cout << "Huhu" << endl;
+        taskCounter++;
+    }
 
-    // TODO: Set facts
-    // TODO: Set variables
-    // TODO: Set available actions
-    // TODO: Set available methods
-    // TODO: Set available tasks
-    // TODO: Set s0
-    // TODO: Set goal
-    // TODO: Call all further model methods
+    // Set available methods
+    model->isTotallyOrdered = true;
+    model->numMethods = numMethods;
+    model->decomposedTask = new int[numMethods];
+    model->numSubTasks = new int[numMethods];
+    model->subTasks = new int*[numMethods];
+    model->numOrderings = new int[numMethods];
+    model->ordering = new int*[numMethods];
+    model->methodNames = new string[numMethods];
+    model->methodIsTotallyOrdered = new bool[numMethods];
+    model->methodTotalOrder = new int*[numMethods];
 
-    return restrictedModel;
+    int methodCounter = 0;
+    for (const Method& method : methods) {
+        model->decomposedTask[methodCounter] = taskMapping[method.decomposedTask];
+        model->methodNames[methodCounter] = method.name;
+
+        // TODO: Replace __top only if initial task network does not equal to {initial task}.
+        copyVectorIntoArray(method.subtasks, model->numSubTasks[methodCounter], model->subTasks[methodCounter]);
+
+        int numSubtasks = model->numSubTasks[methodCounter];
+        int numOrderings = numSubtasks > 0 ? (numSubtasks - 1) * 2 : 0;
+
+        model->numOrderings[methodCounter] = numOrderings;
+        model->ordering[methodCounter] = new int[numOrderings];
+
+        for (int st = 0; st < numSubtasks; st++) {
+            int subtask = model->subTasks[methodCounter][st];
+            model->subTasks[methodCounter][st] = taskMapping[subtask];
+
+            if (st == numSubtasks - 1) continue;
+            model->ordering[methodCounter][st*2] = st;
+            model->ordering[methodCounter][(st*2)+1] = st+1;
+        }
+
+        methodCounter++;
+    }
+
+    // Call all further model methods
+    model->calcPrecLessActionSet();
+    model->removeDuplicatedPrecsInActions();
+    model->calcPrecToActionMapping();
+    model->calcAddToActionMapping();
+    model->calcDelToActionMapping();
+    model->calcTaskToMethodMapping();
+    model->calcDistinctSubtasksOfMethods();
+    model->generateMethodRepresentation();
+
+    return model;
 }
 
 /**
@@ -191,13 +269,35 @@ vector<int> RestrictedHTNModelFactory::extractFacts(const int lengthList, const 
     return list;
 }
 
-vector<int> RestrictedHTNModelFactory::extractSubtask(const int numSubtasks, const int* subtasks) {
-    vector<int> list;
-    for (int st = 0; st < numSubtasks; st++) {
-        int element = subtasks[st];
-        if (!removedTasks[element]) {
-            list.push_back(element);
-        }
+vector<bool> RestrictedHTNModelFactory::computeTaskReachability(const vector<int>& tni, int& numActions, int& numAbstracts, int& numMethods) {
+    int numTasks = static_cast<int>(tasks.size());
+    vector<bool> taskReachable(numTasks, false);
+    FlexIntStack stack{};
+    stack.init(2*numTasks);
+
+    for (int t : tni) {
+        stack.push(t);
     }
-    return list;
+
+    for (int t = stack.pop(); t != -1; t = stack.pop()) {
+        if (taskReachable[t]) continue;
+
+        if (tasks[t].isPrimitive) {
+            taskReachable[t] = true;
+            numActions++;
+            continue;
+        }
+
+        for (int m : tasks[t].methods) {
+            numMethods++;
+            for (int st : methods[m].subtasks) {
+                stack.push(st);
+            }
+        }
+
+        taskReachable[t] = true;
+        numAbstracts++;
+    }
+
+    return taskReachable;
 }

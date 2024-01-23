@@ -5,6 +5,9 @@
 
 namespace progression {
     vector<vector<int>> orderSubTasks(Model* model);
+    vector<int> computeInitTaskNetwork(progression::searchNode* n);
+
+    void copyVectorIntoArray(const vector<int>& from, int& toNum, int*& to);
 }
 
 #endif //PANDAPIENGINE_RESTRICTEDHTNMODELUTILS_H
