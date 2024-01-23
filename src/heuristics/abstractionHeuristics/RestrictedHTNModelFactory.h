@@ -48,7 +48,7 @@ public:
     RestrictedHTNModelFactory(Model* htn, vector<int> pattern); //
     ~RestrictedHTNModelFactory() = default;
 
-    Model* getRestrictedHTNModel(progression::searchNode *n);
+    Model* getRestrictedHTNModel(progression::searchNode *n, bool printModel = false);
 private:
     vector<int> pattern;
 

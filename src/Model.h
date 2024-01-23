@@ -229,8 +229,8 @@ namespace progression {
 			int *sccGnumPred = nullptr;
 			int **sccG = nullptr;
 			int **sccGinverse = nullptr;
-			void constructSCCGraph();
-			void calcSCCGraph();
+			void constructSCCGraph(bool printToConsole);
+			void calcSCCGraph(bool printToConsole = true);
 
 			int* sccTopOrder;
 			bool* sccIsAcyclic;
@@ -249,7 +249,7 @@ namespace progression {
 			void computeTransitiveClosureOfMethodOrderings();
 			void buildOrderingDatastructures();
 
-			void calcSCCs();
+			void calcSCCs(bool printToConsole = true);
 
             void calcPrecLessActionSet();
             void removeDuplicatedPrecsInActions();
@@ -315,7 +315,7 @@ namespace progression {
 			void methodTopSortDFS(int cur, map<int,unordered_set<int>> & adj, map<int, int> & colour, int & curpos, int* order);
 			void computeTransitiveChangeOfMethodOrderings(bool closure, int method);
 
-
+            void print();
     };
 }
 #endif /* MODEL_H_ */

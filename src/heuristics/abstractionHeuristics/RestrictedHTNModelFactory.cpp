@@ -88,7 +88,7 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
     initialTask = htn->initialTask;
 }
 
-Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode *n) {
+Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode *n, bool printModel) {
     int numActions = 0;
     int numAbstracts = 0;
     int numMethods = 0;
@@ -263,6 +263,27 @@ Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode 
     model->calcTaskToMethodMapping();
     model->calcDistinctSubtasksOfMethods();
     model->generateMethodRepresentation();
+
+    if (printModel) {
+        cout << "Initiales Netzwerk:";
+        for (int i : initialTaskNetwork) {
+            cout << " " << i;
+        }
+        cout << endl;
+
+        for (int i = 0; i < taskReachable.size(); i++) {
+            if (!taskReachable[i]) {
+                cout << "Task " << i << " wurde entfernt." << endl;
+            }
+        }
+
+        cout << "Initialer Task: " << model->taskNames[model->initialTask] << " (" << model->initialTask << ")" << endl;
+        cout << "Subtasks:";
+        for (int st = 0; st < model->numSubTasks[0]; st++) {
+            cout << " " << model->subTasks[0][st];
+        }
+        cout << endl;
+    }
 
     return model;
 }

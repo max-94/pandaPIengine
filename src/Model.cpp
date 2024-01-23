@@ -2157,8 +2157,8 @@ namespace progression {
 	int *dfsI;
 	int *lowlink;
 
-	void Model::calcSCCs() {
-		cout << "Calculate SCCs..." << endl;
+	void Model::calcSCCs(bool printToConsole) {
+        if (printToConsole) cout << "Calculate SCCs..." << endl;
 
 		maxdfs = 0;
 		U = new bool[numTasks];
@@ -2187,7 +2187,8 @@ namespace progression {
 			if (sccSize[j] == 2)
 				numCyclicSccs++;
 		}
-		cout << "- Number of SCCs: " << numSCCs << endl;
+
+		if(printToConsole) cout << "- Number of SCCs: " << numSCCs << endl;
 
 		// generate inverse mapping
 		sccToTasks = new int *[numSCCs];
@@ -2284,7 +2285,7 @@ namespace progression {
 		}
 	}
 
-	void Model::constructSCCGraph(){
+	void Model::constructSCCGraph(bool printToConsole){
 		calculatedSccs = true;
 		set<int> **sccg = new set<int> *[numSCCs];
 		set<int>** sccg_rev = new set<int>*[numSCCs];
@@ -2306,13 +2307,16 @@ namespace progression {
 				}
 			}
 		}
-		if (numCyclicSccs == 0) {
-			cout << "- The problem is acyclic" << endl;
-		} else {
-			cout << "- The problem is cyclic" << endl;
-			cout << "- Number of cyclic SCCs: " << numCyclicSccs << endl;
-			cout << "- Number of cyclic SCCs of size 1: " << numSccOneWithSelfLoops << endl;
-		}
+
+        if (printToConsole) {
+            if (numCyclicSccs == 0) {
+                cout << "- The problem is acyclic" << endl;
+            } else {
+                cout << "- The problem is cyclic" << endl;
+                cout << "- Number of cyclic SCCs: " << numCyclicSccs << endl;
+                cout << "- Number of cyclic SCCs of size 1: " << numSccOneWithSelfLoops << endl;
+            }
+        }
 
 		// top-down mapping
 		this->sccGnumSucc = new int[numSCCs];
@@ -2406,8 +2410,8 @@ namespace progression {
 		  }*/
 	}
 
-	void Model::calcSCCGraph() {
-		constructSCCGraph();
+	void Model::calcSCCGraph(bool printToConsole) {
+		constructSCCGraph(printToConsole);
 		if (maintainTaskReachability != mtrNO) {
 			// reachability
 			int lastMaintained = 0;
