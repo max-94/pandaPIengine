@@ -36,12 +36,14 @@
 #include "heuristics/rcHeuristics/RCModelFactory.h"
 #include "heuristics/landmarks/lmExtraction/LmFdConnector.h"
 #include "heuristics/landmarks/hhLMCount.h"
+#include "heuristics/abstractionHeuristics/hhVariableRestriction.h"
 #ifndef CMAKE_NO_ILP
 #include "heuristics/dofHeuristics/hhStatisticsCollector.h"
 #endif
 #include "VisitedList.h"
 
 #include "cmdline.h"
+#include "abstractionHeuristics/RestrictedHTNModelFactory.h"
 
 using namespace std;
 using namespace progression;
@@ -98,8 +100,12 @@ pair<string,map<string,string>> parse_heuristic_with_arguments_from_braced_expre
 }
 
 
-enum planningAlgorithm{
-	PROGRESSION,SAT,BDD,INTERACTIVE,TRANSLATION
+enum planningAlgorithm {
+	PROGRESSION,
+    SAT,
+    BDD,
+    INTERACTIVE,
+    TRANSLATION
 };
 
 
@@ -160,13 +166,11 @@ void printHeuristicHelp(){
 
 
 int main(int argc, char *argv[]) {
-	//speed_test();
-	//return 42;
-#ifndef NDEBUG
+    #ifndef NDEBUG
     cout
-            << "You have compiled the search engine without setting the NDEBUG flag. This will make it slow and should only be done for debug."
-            << endl;
-#endif
+    << "You have compiled the search engine without setting the NDEBUG flag. This will make it slow and should only be done for debug."
+    << endl;
+    #endif
 
 	gengetopt_args_info args_info;
 	if (cmdline_parser(argc, argv, &args_info) != 0) return 1;
@@ -208,8 +212,7 @@ int main(int argc, char *argv[]) {
 		std::cout << "Reading input from " << inputFilename << "." << std::endl;
 
 		std::ifstream * fileInput = new std::ifstream(inputFilename);
-		if (!fileInput->good())
-		{
+		if (!fileInput->good()) {
 			std::cerr << "Unable to open input file " << inputFilename << ": " << strerror (errno) << std::endl;
 			return 1;
 		}
@@ -217,25 +220,21 @@ int main(int argc, char *argv[]) {
 		inputStream = fileInput;
 	}
 
-	//
-
 	bool useTaskHash = true;
-
-
 
     /* Read model */
     // todo: the correct value of maintainTaskRechability depends on the heuristic
     eMaintainTaskReachability reachability = mtrACTIONS;
 	bool trackContainedTasks = useTaskHash;
-    Model* htn = new Model(trackContainedTasks, reachability, true, true);
+
+    auto htn = new Model(trackContainedTasks, reachability, true, true);
 	htn->filename = inputFilename;
 	if (args_info.satmutexes_flag) htn->rintanenInvariants = true;
 	htn->read(inputStream);
 	assert(htn->isHtnModel);
 	searchNode* tnI = htn->prepareTNi(htn);
-			
-	if (inputFilename != "-") ((ifstream*) inputStream)->close();
 
+	if (inputFilename != "-") ((ifstream*) inputStream)->close();
 
 	if (args_info.writeInputToHDDL_given){
 		cout << "writing input problem to file" << endl;
@@ -251,8 +250,6 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-
-	
     if(reachability != mtrNO) {
         htn->calcSCCs();
         htn->calcSCCGraph();
@@ -261,8 +258,6 @@ int main(int argc, char *argv[]) {
         htn->updateReachability(tnI);
     }
 
-//    Heuristic *hLMC = new hhLMCount(htn, 0, tnI, lmfFD);
-
 	planningAlgorithm algo = PROGRESSION;
 	if (args_info.progression_given) algo = PROGRESSION;
 	if (args_info.sat_given) algo = SAT;
@@ -270,11 +265,10 @@ int main(int argc, char *argv[]) {
 	if (args_info.interactive_given) algo = INTERACTIVE;
 	if (args_info.translation_given) algo = TRANSLATION;
 
-
-	if (algo == INTERACTIVE){
+	if (algo == INTERACTIVE) {
 		cout << "Selected Planning Algorihtm: interactive";
 		interactivePlanner(htn,tnI);
-	} else if (algo == PROGRESSION){
+	} else if (algo == PROGRESSION) {
 		cout << "Selected Planning Algorithm: progression search";
 	
 		int hLength = args_info.heuristic_given;
@@ -286,7 +280,7 @@ int main(int argc, char *argv[]) {
 		}
     	Heuristic **heuristics = new Heuristic *[hLength];
 		map<pair<string,map<string,string>>, int> heuristics_so_far;
-		for (int i = 0; i < hLength; i++){
+		for (int i = 0; i < hLength; i++) {
 			auto [hName, args] = parse_heuristic_with_arguments_from_braced_expression(args_info.heuristic_arg[i]);
 			
 			if (heuristics_so_far.count({hName, args})){
@@ -296,8 +290,10 @@ int main(int argc, char *argv[]) {
 			}
 			heuristics_so_far[{hName, args}] = i;
 
-			if (hName == "zero"){
-    			heuristics[i] = new hhZero(htn, i);
+			if (hName == "zero") {
+                heuristics[i] = new hhZero(htn, i);
+            } else if (hName == "variableRestriction") {
+                heuristics[i] = new hhVariableRestriction(htn, i);
 			} else if (hName == "modDepth"){
 				string invertString = (args.count("invert"))?args["invert"]:args["arg1"];
 				bool invert = false;
@@ -347,7 +343,7 @@ int main(int argc, char *argv[]) {
 					((hhRC2<hsAddFF>*)heuristics[i])->sasH->heuristic = sasFF;
 				}
 			} else if (hName == "dof"){
-#ifndef CMAKE_NO_ILP
+                #ifndef CMAKE_NO_ILP
 				string type_string = (args.count("type"))?args["type"]:args["arg1"];
 				IloNumVar::Type intType = IloNumVar::Int;
 				IloNumVar::Type boolType = IloNumVar::Bool;
@@ -399,10 +395,10 @@ int main(int argc, char *argv[]) {
 
 
 				heuristics[i] = new hhDOfree(htn,tnI,i,intType,boolType,mode,tdg,pg,andOrLM,lmclms,netchange,externalLM);
-#else
+                #else
 				cout << "Planner compiled without CPLEX support" << endl;
 				return 1;
-#endif
+                #endif
 			} else {
 				cout << "Heuristic type \"" << hName << "\" is unknown." << endl;
 				return 1;
@@ -422,16 +418,17 @@ int main(int argc, char *argv[]) {
 
 		cout << "Search config:" << endl;
 		cout << " - type: ";
+
 		switch (aStarType){
 			case gValNone: cout << "greedy"; break;
 			case gValActionCosts: cout << "cost optimal"; break;
 			case gValPathCosts: cout << "path cost"; break;
 			case gValActionPathCosts: cout << "action cost + decomposition cost"; break;
 		}
+
 		cout << endl;
 		cout << " - weight: " << aStarWeight << endl;
 		cout << " - suboptimal: " << (suboptimalSearch?"true":"false") << endl;
-
 
 		bool noVisitedList = args_info.noVisitedList_flag;
 		bool allowGIcheck = args_info.noGIcheck_flag;
@@ -445,12 +442,11 @@ int main(int argc, char *argv[]) {
 		VisitedList visi(htn,noVisitedList, suboptimalSearch, taskHash, taskSequenceHash, topologicalOrdering, orderPairsHash, layerHash, allowGIcheck, allowParalleSequencesMode);
     	PriorityQueueSearch search;
     	OneQueueWAStarFringe fringe(aStarType, aStarWeight, hLength);
-
-
 		bool printPlan = !args_info.noPlanOutput_flag;
+
     	search.search(htn, tnI, timeL, suboptimalSearch, printPlan, heuristics, hLength, visi, fringe);
 	} else if (algo == SAT){
-#ifndef CMAKE_NO_SAT
+        #ifndef CMAKE_NO_SAT
 		bool block_compression = args_info.blockcompression_flag;
 		bool sat_mutexes = args_info.satmutexes_flag;
 		bool effectLessActionsInSeparateLeaf = args_info.methodPreconditionsInSeparateLeafs_given;
@@ -465,15 +461,15 @@ int main(int argc, char *argv[]) {
 		if (sat_mutexes) compute_Rintanen_Invariants(htn);
 
 		solve_with_sat_planner(htn, block_compression, sat_mutexes, pruningMode, effectLessActionsInSeparateLeaf, optimisingMode);
-#else
+        #else
 		cout << "Planner compiled without SAT planner support" << endl;
-#endif
+        #endif
 	} else if (algo == BDD){
-#ifndef CMAKE_NO_BDD
+        #ifndef CMAKE_NO_BDD
 		build_automaton(htn);
-#else
+        #else
 		cout << "Planner compiled without symbolic planner support" << endl;
-#endif
+        #endif
 	} else if (algo == TRANSLATION){
 		TranslationType type;
 		if (string(args_info.transtype_arg) == "push") type = Push; 
@@ -489,120 +485,5 @@ int main(int argc, char *argv[]) {
 	}
 
     delete htn;
-    
-	
 	return 0;
 }
-
-
-
-
-
-
-
-
-/*
-    long initO, initN;
-    long genO, genN;
-    long initEl = 0;
-    long genEl;
-    long start, end;
-    long tlmEl;
-    long flmEl = 0;
-    long mlmEl = 0;
-    long tlmO, flmO, mlmO, tlmN, flmN, mlmN;
-
-    timeval tp;
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    LmCausal* lmc = new LmCausal(htn);
-    lmc->prettyprintAndOrGraph();
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    initN = end - start;
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    LMsInAndOrGraphs* ao = new LMsInAndOrGraphs(htn);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    initO = end - start;
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-	lmc->calcLMs(tnI);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    genN = end - start;
-
-    tlmN = landmark::coutLM(lmc->getLMs(), task, lmc->numLMs);
-    flmN = landmark::coutLM(lmc->getLMs(), fact, lmc->numLMs);
-    mlmN = landmark::coutLM(lmc->getLMs(), METHOD, lmc->numLMs);
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    ao->generateAndOrLMs(tnI);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    genO = end - start;
-
-    tlmO = landmark::coutLM(ao->getLMs(), task, ao->getNumLMs());
-    flmO = landmark::coutLM(ao->getLMs(), fact, ao->getNumLMs());
-    mlmO = landmark::coutLM(ao->getLMs(), METHOD, ao->getNumLMs());
-
-    if(lmc->numLMs != ao->getNumLMs()) {
-        cout << "AAAAAAAAAAAAAAAAAAAAHHH " << ao->getNumLMs() << " - " << lmc->numLMs << endl;
-        for(int i = 0; i < ao->getNumLMs(); i ++) {
-            ao->getLMs()[i]->printLM();
-        }
-        cout << "----------------------" << endl;
-        for(int i = 0; i < lmc->numLMs; i++) {
-            lmc->landmarks[i]->printLM();
-        }
-    }
-
-    cout << "TIME:" << endl;
-    cout << "Init       : " << initO << " " << initN << " delta " << (initN - initO) << endl;
-    cout << "Generation : " << genO << " " << genN << " delta " << (genN - genO) << endl;
-    cout << "Total      : " << (initO + genO) << " " << (initN + genN) << " delta " << ((initN + genN) - (initO + genO)) << endl;
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    ao->generateLocalLMs(htn, tnI);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    genEl = end - start;
-
-    tlmEl = landmark::coutLM(ao->getLMs(), task, ao->getNumLMs());
-    flmEl = landmark::coutLM(ao->getLMs(), fact, ao->getNumLMs());
-    mlmEl = landmark::coutLM(ao->getLMs(), METHOD, ao->getNumLMs());
-
-    cout << "LMINFO:[" << s << ";";
-    cout << initEl << ";" << genEl << ";" << (initEl + genEl) << ";";
-    cout << initO << ";" << genO << ";" << (initO + genO) << ";";
-    cout << initN << ";" << genN << ";" << (initN + genN) << ";";
-    cout << tlmEl << ";" << flmEl << ";" << mlmEl << ";";
-    cout << tlmO << ";" << flmO << ";" << mlmO << ";";
-    cout << tlmN << ";" << flmN << ";" << mlmN << ";";
-    cout << "]" << endl;
-
-	//lmc->prettyprintAndOrGraph();
-    for(int i = 0; i < htn->numTasks; i++)
-        cout << i << " " << htn->taskNames[i] << endl;
-    for(int i = 0; i < htn->numStateBits; i++)
-        cout << i << " " << htn->factStrs[i] << endl;
-
-    cout << "AND/OR landmarks" << endl;
-    for(int i = 0; i < lmc->numLMs; i++) {
-        lmc->getLMs()[i]->printLM();
-    }
-    cout << "Local landmarks" << endl;
-    for(int i = 0; i < ao->getNumLMs(); i++) {
-       ao->getLMs()[i]->printLM();
-    }
-
-    cout << "PRINT" << endl;
-    lmc->prettyPrintLMs();
-
-	exit(17);*/
-

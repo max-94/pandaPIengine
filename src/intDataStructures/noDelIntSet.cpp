@@ -31,6 +31,13 @@ noDelIntSet::~noDelIntSet() {
 	delete[] intContainer;
 }
 
+void noDelIntSet::reset() {
+    delete[] boolContainer;
+    delete[] intContainer;
+    containerSize = -1;
+    currentSize = -1;
+}
+
 noDelIntSet* noDelIntSet::clone() {
 	noDelIntSet* that = new noDelIntSet();
 	that->init(this->containerSize);

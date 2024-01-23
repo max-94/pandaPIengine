@@ -27,88 +27,91 @@ using namespace std;
 
 namespace progression {
 
-	Model::Model() : Model(false, mtrNO, true, true) {
-	}
+	Model::Model() : Model(false, mtrNO, true, true) { }
 
-	Model::Model(bool trackTasks, eMaintainTaskReachability maintainTaskReachability, bool progressEffectLess,
-			bool progressOneModActions) : trackTasksInTN(trackTasks), progressEffectLess(progressEffectLess),
-	progressOneModActions(progressOneModActions),
-	maintainTaskReachability(maintainTaskReachability) {
-		numStateBits = 0;
-		numTasks = 0;
-		numPrecLessActions = 0;
-		numMethods = 0;
-		initialTask = -1;
-		gSize = 0;
-		isHtnModel = false;
-		numActions = 0;
-		numVars = 0;
-		s0Size = 0;
-		factStrs = nullptr;
-		firstIndex = nullptr;
-		lastIndex = nullptr;
-		varNames = nullptr;
-		actionCosts = nullptr;
-		precLists = nullptr;
-		addLists = nullptr;
-		delLists = nullptr;
-		precLessActions = nullptr;
-		precToActionSize = nullptr;
-		precToAction = nullptr;
-		addToActionSize = nullptr;
-		addToAction = nullptr;
-		delToActionSize = nullptr;
-		delToAction = nullptr;
-		numPrecs = nullptr;
-		numAdds = nullptr;
-		numDels = nullptr;
-		s0List = nullptr;
-		gList = nullptr;
-		isPrimitive = nullptr;
-		taskNames = nullptr;
-		emptyMethod = nullptr;
-		decomposedTask = nullptr;
-		numSubTasks = nullptr;
-		numFirstPrimSubTasks = nullptr;
-		numFirstAbstractSubTasks = nullptr;
-		numOrderings = nullptr;
-		methodIsTotallyOrdered = nullptr;
-		methodTotalOrder = nullptr;
-		methodNames = nullptr;
-		numFirstTasks = nullptr;
-		numLastTasks = nullptr;
-		taskToMethods = nullptr;
-		numMethodsForTask = nullptr;
-		subTasks = nullptr;
-		ordering = nullptr;
-		methodsFirstTasks = nullptr;
-		methodsLastTasks = nullptr;
-		methodSubtaskSuccNum = nullptr;
-		addVectors = nullptr;
-		delVectors = nullptr;
-		s0Vector = nullptr;
+	Model::Model(
+        bool trackTasks, eMaintainTaskReachability maintainTaskReachability, bool progressEffectLess,
+		bool progressOneModActions
+    ) : trackTasksInTN(trackTasks),
+        progressEffectLess(progressEffectLess),
+	    progressOneModActions(progressOneModActions),
+	    maintainTaskReachability(maintainTaskReachability) {
+		    numStateBits = 0;
+		    numTasks = 0;
+		    numPrecLessActions = 0;
+		    numMethods = 0;
+		    initialTask = -1;
+		    gSize = 0;
+		    isHtnModel = false;
+		    numActions = 0;
+		    numVars = 0;
+		    s0Size = 0;
+		    factStrs = nullptr;
+		    firstIndex = nullptr;
+		    lastIndex = nullptr;
+		    varNames = nullptr;
+		    actionCosts = nullptr;
+		    precLists = nullptr;
+		    addLists = nullptr;
+		    delLists = nullptr;
+		    precLessActions = nullptr;
+		    precToActionSize = nullptr;
+		    precToAction = nullptr;
+		    addToActionSize = nullptr;
+		    addToAction = nullptr;
+		    delToActionSize = nullptr;
+		    delToAction = nullptr;
+		    numPrecs = nullptr;
+		    numAdds = nullptr;
+		    numDels = nullptr;
+		    s0List = nullptr;
+		    gList = nullptr;
+		    isPrimitive = nullptr;
+		    taskNames = nullptr;
+		    emptyMethod = nullptr;
+		    decomposedTask = nullptr;
+		    numSubTasks = nullptr;
+		    numFirstPrimSubTasks = nullptr;
+		    numFirstAbstractSubTasks = nullptr;
+		    numOrderings = nullptr;
+		    methodIsTotallyOrdered = nullptr;
+		    methodTotalOrder = nullptr;
+		    methodNames = nullptr;
+		    numFirstTasks = nullptr;
+		    numLastTasks = nullptr;
+		    taskToMethods = nullptr;
+		    numMethodsForTask = nullptr;
+		    subTasks = nullptr;
+		    ordering = nullptr;
+		    methodsFirstTasks = nullptr;
+		    methodsLastTasks = nullptr;
+		    methodSubtaskSuccNum = nullptr;
+		    addVectors = nullptr;
+		    delVectors = nullptr;
+		    s0Vector = nullptr;
 
-		if (progressEffectLess) {
-			effectLess = new FlexIntStack();
-			effectLess->init(25);
-		}
-#ifdef ONEMODMETH
-		oneMod = new FlexIntStack();
-		oneMod->init(25);
-#endif
+		    if (progressEffectLess) {
+			    effectLess = new FlexIntStack();
+			    effectLess->init(25);
+		    }
 
-		/*
-#ifdef TRACKLMSFULL
-newlyReachedFLMs = new noDelIntSet();
-newlyReachedTLMs = new noDelIntSet();
-newlyReachedMLMs = new noDelIntSet();
-newlyReachedFLMs->init(tn);
-newlyReachedTLMs = new noDelIntSet();
-newlyReachedMLMs = new noDelIntSet();
-#endif
-*/
+            #ifdef ONEMODMETH
+            oneMod = new FlexIntStack();
+		    oneMod->init(25);
+            #endif
 
-	}
+		    /*
+            #ifdef TRACKLMSFULL
+            newlyReachedFLMs = new noDelIntSet();
+            newlyReachedTLMs = new noDelIntSet();
+            newlyReachedMLMs = new noDelIntSet();
+            newlyReachedFLMs->init(tn);
+            newlyReachedTLMs = new noDelIntSet();
+            newlyReachedMLMs = new noDelIntSet();
+            #endif
+            */
+
+	    }
 
 	Model::~Model() {
 		delete[] factStrs;
@@ -261,128 +264,6 @@ newlyReachedMLMs = new noDelIntSet();
 			n->containedTaskCount[ni] = parent->containedTaskCount[i];
 			ni++;
 		}
-
-#ifndef NDEBUG
-		/*	
-			cout << endl << endl << "TN n:" << n << " Parent " << parent << endl;
-			cout << "applied action " << action << endl;
-			cout << "old ";
-			for(int i = 0;i < parent->numContainedTasks;i++) {
-			cout << parent->containedTasks[i] << "*" << parent->containedTaskCount[i] << " ";
-			}
-			cout << endl;
-			cout << "new ";
-			for(int i = 0;i < n->numContainedTasks;i++) {
-			cout << n->containedTasks[i] << "*" << n->containedTaskCount[i] << " ";
-			}
-			cout << endl << endl;
-
-*/
-		// count tasks in this network and compare to the tracked values
-		/*	int* counted = new int[this->numTasks];
-			for (int i = 0; i < this->numTasks; i++)
-			counted[i] = 0;
-			set<int> done;
-			vector<planStep*> todoList;
-			for (int i = 0; i < n->numPrimitive; i++)
-			todoList.push_back(n->unconstraintPrimitive[i]);
-			for (int i = 0; i < n->numAbstract; i++)
-			todoList.push_back(n->unconstraintAbstract[i]);
-			*/
-		/*	for (int i = 0; i < n->numPrimitive; i++)
-			cout << "UCP: " << n->unconstraintPrimitive[i] << endl;
-			for (int i = 0; i < n->numAbstract; i++)
-			cout << "UCA: " << n->unconstraintAbstract[i] << endl;
-
-			for (int i = 0; i < parent->numPrimitive; i++)
-			cout << "UCP-P: " << parent->unconstraintPrimitive[i] << endl;
-			for (int i = 0; i < parent->numAbstract; i++)
-			cout << "UCA-P: " << parent->unconstraintAbstract[i] << endl;
-			*/
-
-		/*	while (!todoList.empty()) {
-			planStep* ps = todoList.back();
-		//cout << "I reach " << ps << " " << ps->task << endl;
-		todoList.pop_back();
-		if (done.count(ps->id)) continue;
-		done.insert(ps->id);
-		counted[ps->task]++;
-		for (int i = 0; i < ps->numSuccessors; i++) {
-		planStep* succ = ps->successorList[i];
-		//cout << "I-S " << succ << " " << ps << endl;
-		const bool included = done.find(succ->id) != done.end();
-		if (!included)
-		todoList.push_back(succ);
-		}
-		}
-		*/
-
-		/*	// count tasks in this network and compare to the tracked values
-			int* counted2 = new int[this->numTasks];
-			for (int i = 0; i < this->numTasks; i++)
-			counted2[i] = 0;
-			set<int> done2;
-			vector<planStep*> todoList2;
-			for (int i = 0; i < parent->numPrimitive; i++)
-			todoList2.push_back(parent->unconstraintPrimitive[i]);
-			for (int i = 0; i < parent->numAbstract; i++)
-			todoList2.push_back(parent->unconstraintAbstract[i]);
-			while (!todoList2.empty()) {
-			planStep* ps = todoList2.back();
-			cout << "Parent reach " << ps << " " << ps->task << endl;
-			todoList2.pop_back();
-			if (done2.count(ps->id)) continue;
-			done2.insert(ps->id);
-			counted2[ps->task]++;
-			for (int i = 0; i < ps->numSuccessors; i++) {
-			planStep* succ = ps->successorList[i];
-			cout << "P-S " << succ << " " << ps << endl;
-			const bool included = done2.find(succ->id) != done2.end();
-			if (!included)
-			todoList2.push_back(succ);
-			}
-			}
-			*/
-		/*	map<int,int> containedTasksUpdated;
-			for (int i = 0; i < n->numContainedTasks; i++)
-			containedTasksUpdated[n->containedTasks[i]] = n->containedTaskCount[i];
-			*/
-		/*	//for(int i = 0; i < this->numTasks; i++) {
-		//if(counted[i] != containedTasksUpdated [i]) {
-		cout << "TN n:" << n << " Parent " << parent << endl;
-		cout << endl << "Used action: " << " " << action << " " << this->taskNames[action] << endl << endl;
-		for(int j = 0; j < this->numTasks; j++)
-		if((counted[j] + containedTasksUpdated [j]) > 0)
-		cout << j << " " << this->taskNames[j] << " " << counted[j] << " " << containedTasksUpdated [j] << endl;
-
-		cout << endl << "solution:" << endl;
-		solutionStep* s = n->solution;
-		while (s){
-		cout << this->taskNames[s->task] << endl;
-		s = s->prev;
-		}
-
-
-
-
-
-
-
-		cout << "OLD" << endl;
-		for(int j = 0; j < this->numTasks; j++)
-		if((counted2[j]) > 0)
-		cout << j << " " << this->taskNames[j] << " " << counted2[j] << endl;
-
-
-		//if (this->taskNames[action] == "__method_precondition_m-get_image_data[camera0,high_res,objective1,rover0,waypoint0]") exit(1);
-
-*/
-
-		//}
-		//	for(int i = 0; i < this->numTasks; i++) 
-		//		assert(counted[i] == containedTasksUpdated[i]);
-
-#endif
 	}
 
 	void Model::updateTaskCounterM(searchNode *n, searchNode *parent, int m) {
@@ -1666,90 +1547,13 @@ newlyReachedMLMs = new noDelIntSet();
 #endif
 		}
 
-		// determine set of actions that have no precondition
-		if (numPrecLessActions > 0) {
-			int cur = 0;
-			precLessActions = new int[numPrecLessActions];
-			for (int i = 0; i < numActions; i++) {
-				if (numPrecs[i] == 0) {
-					precLessActions[cur++] = i;
-				}
-			}
-			assert(cur == numPrecLessActions);
-		} else {
-			precLessActions = nullptr;
-		}
+        calcPrecLessActionSet();
+        removeDuplicatedPrecsInActions();
 
-		for (int i = 0; i < numActions; i++) {
-			set<int> intSet;
-			for (int j = 0; j < numPrecs[i]; j++) {
-				assert(precLists[i][j] < numStateBits);
-				intSet.insert(precLists[i][j]);
-			}
-			int intSize = intSet.size();
-			if (intSize < numPrecs[i]) {
-				cout
-					<< "Action #" << i << " prec/add/del-definition contains same state feature twice"
-					<< endl;
-#ifndef NDEBUG
-				cout << "Original:";
-				for (int j = 0; j < numPrecs[i]; j++) cout << " " << precLists[i][j];
-				cout << endl;
-#endif
-				numPrecs[i] = intSet.size();
-				delete[] precLists[i];
-				precLists[i] = new int[numPrecs[i]];
-				int cur = 0;
-				for (int p : intSet) {
-					precLists[i][cur++] = p;
-				}
-				assert(cur == intSize);
-			}
-		}
-
-		set<int> *precToActionTemp = new set<int>[numStateBits];
-		for (int i = 0; i < numActions; i++) {
-			for (int j = 0; j < numPrecs[i]; j++) {
-				int f = precLists[i][j];
-				precToActionTemp[f].insert(i);
-			}
-		}
-		precToActionSize = new int[numStateBits];
-		precToAction = new int *[numStateBits];
-
-		for (int i = 0; i < numStateBits; i++) {
-			precToActionSize[i] = precToActionTemp[i].size();
-			precToAction[i] = new int[precToActionSize[i]];
-			int cur = 0;
-			for (int ac : precToActionTemp[i]) {
-				precToAction[i][cur++] = ac;
-			}
-		}
-		delete[] precToActionTemp;
-
-		// add to action
+		// Creating mappings to link precondition facts, add and delete effects with primitive actions.
+        calcPrecToActionMapping();
         calcAddToActionMapping();
-
-        // del to action
-		set<int> * delToActionTemp = new set<int>[numStateBits];
-		for (int i = 0; i < numActions; i++) {
-			for (int j = 0; j < numDels[i]; j++) {
-				int f = delLists[i][j];
-				delToActionTemp[f].insert(i);
-			}
-		}
-		delToActionSize = new int[numStateBits];
-		delToAction = new int*[numStateBits];
-
-		for (int i = 0; i < numStateBits; i++) {
-			delToActionSize[i] = delToActionTemp[i].size();
-			delToAction[i] = new int[delToActionSize[i]];
-			int cur = 0;
-			for (int ac : delToActionTemp[i]) {
-				delToAction[i][cur++] = ac;
-			}
-		}
-		delete[] delToActionTemp;
+        calcDelToActionMapping();
 
 		// s0
 		getline(domainFile, line);
@@ -1796,28 +1600,6 @@ newlyReachedMLMs = new noDelIntSet();
 			delete sStream;
 		}
 	}
-
-    void Model::calcAddToActionMapping() {
-        set<int> *addToActionTemp = new set<int>[numStateBits];
-        for (int i = 0; i < numActions; i++) {
-            for (int j = 0; j < numAdds[i]; j++) {
-                int f = addLists[i][j];
-                addToActionTemp[f].insert(i);
-            }
-        }
-        addToActionSize = new int[numStateBits];
-        addToAction = new int*[numStateBits];
-
-        for (int i = 0; i < numStateBits; i++) {
-            addToActionSize[i] = addToActionTemp[i].size();
-            addToAction[i] = new int[addToActionSize[i]];
-            int cur = 0;
-            for (int ac : addToActionTemp[i]) {
-                addToAction[i][cur++] = ac;
-            }
-        }
-        delete[] addToActionTemp;
-    }
 
     void Model::readHierarchical(istream &domainFile) {
 		stringstream *sStream;
@@ -1882,18 +1664,20 @@ newlyReachedMLMs = new noDelIntSet();
 					<< endl;
 				exit(-1);
 			}
-#ifndef NDEBUG
+
+            #ifndef NDEBUG
 			for (int j = 0; j < numSubTasks[i]; j++) {
 				assert(subTasks[i][j] < numTasks);
 			}
-#endif
+            #endif
+
 			getline(domainFile, line);
 			ordering[i] = readIntList(line, numOrderings[i]);
 
 			// transitive reduction and determination of properties
 			computeTransitiveChangeOfMethodOrderings(false,i);
 
-#ifndef NDEBUG
+            #ifndef NDEBUG
 			assert((numOrderings[i] % 2) == 0);
 			for (int j = 0; j < numOrderings[i]; j++) {
 				assert(ordering[i][j] < numSubTasks[i]);
@@ -1942,116 +1726,122 @@ newlyReachedMLMs = new noDelIntSet();
 					}
 				}
 			}
-#endif
+            #endif
 		}
 
-
-		// Mapping from task to methods where it is a subtasks
-		stToMethodNum = new int[this->numTasks];
-		for (int i = 0; i < this->numTasks; i++)
-			stToMethodNum[i] = 0;
-		for (int iM = 0; iM < this->numMethods; iM++) {
-			for (int iST = 0; iST < this->numSubTasks[iM]; iST++) {
-				int st = this->subTasks[iM][iST];
-				stToMethodNum[st]++;
-			}
-		}
-
-		stToMethod = new int *[this->numTasks];
-		int *k = new int[this->numTasks];
-		for (int i = 0; i < this->numTasks; i++) {
-			stToMethod[i] = new int[stToMethodNum[i]];
-			k[i] = 0;
-		}
-
-		for (int m = 0; m < this->numMethods; m++) {
-			for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
-				int st = this->subTasks[m][iST];
-				if (iu.indexOf(stToMethod[st], 0, k[st] - 1, m) < 0) {
-					stToMethod[st][k[st]++] = m;
-				} else {
-					stToMethodNum[st]--;
-				}
-			}
-		}
-		delete[] k;
-
-#ifndef NDEBUG
-		/*
-		 * check mapping
-		 */
-		for (int m = 0; m < this->numMethods; m++) {
-			for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
-				int st = this->subTasks[m][iST];
-				int i = iu.indexOf(stToMethod[st], 0, stToMethodNum[st] - 1, m);
-				assert(i >= 0);
-			}
-		}
-		set<int> test;
-		for (int t = 0; t < numTasks; t++) {
-			test.clear();
-			for (int iM = 0; iM < stToMethodNum[t]; iM++) {
-				int m = stToMethod[t][iM];
-				test.insert(m);
-			}
-			assert(test.size() == stToMethodNum[t]);
-		}
-		for (int t = 0; t < numTasks; t++) {
-			for (int iM = 0; iM < stToMethodNum[t]; iM++) {
-				int m = stToMethod[t][iM];
-				bool isIn = false;
-				for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
-					int st = this->subTasks[m][iST];
-					if (st == t) {
-						isIn = true;
-						break;
-					}
-				}
-				assert(isIn);
-			}
-		}
-#endif
-
-		// sets of distinct subtasks of methods
-		this->numDistinctSTs = new int[numMethods];
-		this->sortedDistinctSubtasks = new int *[numMethods];
-		this->sortedDistinctSubtaskCount = new int *[numMethods];
-
-		for (int m = 0; m < this->numMethods; m++) {
-			int n = this->numSubTasks[m];
-			int *sts = new int[n];
-			int *stcount = new int[n];
-
-			for (int ist = 0; ist < n; ist++) {
-				sts[ist] = this->subTasks[m][ist];
-				stcount[ist] = 1;
-			}
-
-			for (int ist = 0; ist < n; ist++) {
-				stcount[ist] = 1;
-			}
-			iu.sort(sts, 0, n - 1);
-
-			for (int i = 0; i < n - 1; i++) {
-				int j = 0;
-				while (((i + j + 1) < n) && (sts[i] == sts[i + j + 1])) {
-					j++;
-				}
-				if (j > 0) {
-					stcount[i] += j;
-					int k = 0;
-					while ((i + k + j) < n) {
-						sts[i + k] = sts[i + k + j];
-						k++;
-					}
-					n -= j;
-				}
-			}
-			this->numDistinctSTs[m] = n;
-			this->sortedDistinctSubtasks[m] = sts;
-			this->sortedDistinctSubtaskCount[m] = stcount;
-		}
+		calcTaskToMethodMapping();
+        calcDistinctSubtasksOfMethods();
 	}
+
+    void Model::calcPrecLessActionSet() {
+        if (numPrecLessActions > 0) {
+            int cur = 0;
+            precLessActions = new int[numPrecLessActions];
+            for (int i = 0; i < numActions; i++) {
+                if (numPrecs[i] == 0) {
+                    precLessActions[cur++] = i;
+                }
+            }
+            assert(cur == numPrecLessActions);
+        } else {
+            precLessActions = nullptr;
+        }
+    }
+
+    void Model::removeDuplicatedPrecsInActions() {
+        for (int i = 0; i < numActions; i++) {
+            set<int> ints;
+            for (int j = 0; j < numPrecs[i]; j++) {
+                assert(precLists[i][j] < numStateBits);
+                ints.insert(precLists[i][j]);
+            }
+            int intSize = static_cast<int>(ints.size());
+            if (intSize < numPrecs[i]) {
+                cout << "Action #" << i << " prec/add/del-definition contains same state feature twice" << endl;
+
+                #ifndef NDEBUG
+                cout << "Original:";
+                for (int j = 0; j < numPrecs[i]; j++) cout << " " << precLists[i][j];
+                cout << endl;
+                #endif
+
+                numPrecs[i] = static_cast<int>(ints.size());
+                delete[] precLists[i];
+                precLists[i] = new int[numPrecs[i]];
+                int cur = 0;
+                for (int p : ints) {
+                    precLists[i][cur++] = p;
+                }
+                assert(cur == intSize);
+            }
+        }
+    }
+
+    void Model::calcPrecToActionMapping() {
+        auto *precToActionTemp = new set<int>[numStateBits];
+        for (int i = 0; i < numActions; i++) {
+            for (int j = 0; j < numPrecs[i]; j++) {
+                int f = precLists[i][j];
+                precToActionTemp[f].insert(i);
+            }
+        }
+        precToActionSize = new int[numStateBits];
+        precToAction = new int *[numStateBits];
+
+        for (int i = 0; i < numStateBits; i++) {
+            precToActionSize[i] = static_cast<int>(precToActionTemp[i].size());
+            precToAction[i] = new int[precToActionSize[i]];
+            int cur = 0;
+            for (int ac : precToActionTemp[i]) {
+                precToAction[i][cur++] = ac;
+            }
+        }
+        delete[] precToActionTemp;
+    }
+
+    void Model::calcAddToActionMapping() {
+        auto *addToActionTemp = new set<int>[numStateBits];
+        for (int i = 0; i < numActions; i++) {
+            for (int j = 0; j < numAdds[i]; j++) {
+                int f = addLists[i][j];
+                addToActionTemp[f].insert(i);
+            }
+        }
+        addToActionSize = new int[numStateBits];
+        addToAction = new int*[numStateBits];
+
+        for (int i = 0; i < numStateBits; i++) {
+            addToActionSize[i] = static_cast<int>(addToActionTemp[i].size());
+            addToAction[i] = new int[addToActionSize[i]];
+            int cur = 0;
+            for (int ac : addToActionTemp[i]) {
+                addToAction[i][cur++] = ac;
+            }
+        }
+        delete[] addToActionTemp;
+    }
+
+    void Model::calcDelToActionMapping() {
+        auto * delToActionTemp = new set<int>[numStateBits];
+        for (int i = 0; i < numActions; i++) {
+            for (int j = 0; j < numDels[i]; j++) {
+                int f = delLists[i][j];
+                delToActionTemp[f].insert(i);
+            }
+        }
+        delToActionSize = new int[numStateBits];
+        delToAction = new int*[numStateBits];
+
+        for (int i = 0; i < numStateBits; i++) {
+            delToActionSize[i] = static_cast<int>(delToActionTemp[i].size());
+            delToAction[i] = new int[delToActionSize[i]];
+            int cur = 0;
+            for (int ac : delToActionTemp[i]) {
+                delToAction[i][cur++] = ac;
+            }
+        }
+        delete[] delToActionTemp;
+    }
 
     void Model::generateVectorRepresentation() {
         addVectors = new bool *[numActions];
@@ -2079,6 +1869,111 @@ newlyReachedMLMs = new noDelIntSet();
         }
     }
 
+    void Model::calcTaskToMethodMapping() {
+        stToMethodNum = new int[this->numTasks];
+        for (int i = 0; i < this->numTasks; i++)
+            stToMethodNum[i] = 0;
+        for (int iM = 0; iM < this->numMethods; iM++) {
+            for (int iST = 0; iST < this->numSubTasks[iM]; iST++) {
+                int st = this->subTasks[iM][iST];
+                stToMethodNum[st]++;
+            }
+        }
+
+        stToMethod = new int *[this->numTasks];
+        int *k = new int[this->numTasks];
+        for (int i = 0; i < this->numTasks; i++) {
+            stToMethod[i] = new int[stToMethodNum[i]];
+            k[i] = 0;
+        }
+
+        for (int m = 0; m < this->numMethods; m++) {
+            for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
+                int st = this->subTasks[m][iST];
+                if (iu.indexOf(stToMethod[st], 0, k[st] - 1, m) < 0) {
+                    stToMethod[st][k[st]++] = m;
+                } else {
+                    stToMethodNum[st]--;
+                }
+            }
+        }
+        delete[] k;
+
+        #ifndef NDEBUG
+        // Check mapping
+        for (int m = 0; m < this->numMethods; m++) {
+            for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
+                int st = this->subTasks[m][iST];
+                int i = iu.indexOf(stToMethod[st], 0, stToMethodNum[st] - 1, m);
+                assert(i >= 0);
+            }
+        }
+        set<int> test;
+        for (int t = 0; t < numTasks; t++) {
+            test.clear();
+            for (int iM = 0; iM < stToMethodNum[t]; iM++) {
+                int m = stToMethod[t][iM];
+                test.insert(m);
+            }
+            assert(test.size() == stToMethodNum[t]);
+        }
+        for (int t = 0; t < numTasks; t++) {
+            for (int iM = 0; iM < stToMethodNum[t]; iM++) {
+                int m = stToMethod[t][iM];
+                bool isIn = false;
+                for (int iST = 0; iST < this->numSubTasks[m]; iST++) {
+                    int st = this->subTasks[m][iST];
+                    if (st == t) {
+                        isIn = true;
+                        break;
+                    }
+                }
+                assert(isIn);
+            }
+        }
+        #endif
+    }
+
+    void Model::calcDistinctSubtasksOfMethods() {
+        this->numDistinctSTs = new int[numMethods];
+        this->sortedDistinctSubtasks = new int *[numMethods];
+        this->sortedDistinctSubtaskCount = new int *[numMethods];
+
+        for (int m = 0; m < this->numMethods; m++) {
+            int n = this->numSubTasks[m];
+            int *sts = new int[n];
+            int *stcount = new int[n];
+
+            for (int ist = 0; ist < n; ist++) {
+                sts[ist] = this->subTasks[m][ist];
+                stcount[ist] = 1;
+            }
+
+            for (int ist = 0; ist < n; ist++) {
+                stcount[ist] = 1;
+            }
+            iu.sort(sts, 0, n - 1);
+
+            for (int i = 0; i < n - 1; i++) {
+                int j = 0;
+                while (((i + j + 1) < n) && (sts[i] == sts[i + j + 1])) {
+                    j++;
+                }
+                if (j > 0) {
+                    stcount[i] += j;
+                    int k = 0;
+                    while ((i + k + j) < n) {
+                        sts[i + k] = sts[i + k + j];
+                        k++;
+                    }
+                    n -= j;
+                }
+            }
+            this->numDistinctSTs[m] = n;
+            this->sortedDistinctSubtasks[m] = sts;
+            this->sortedDistinctSubtaskCount[m] = stcount;
+        }
+    }
 
 	void Model::read(istream *inputStream) {
 		string line;
@@ -2093,10 +1988,10 @@ newlyReachedMLMs = new noDelIntSet();
             generateVectorRepresentation();
         }
 
-#if DLEVEL == 5
+        #if DLEVEL == 5
 		printActions();
 		printMethods();
-#endif
+        #endif
 	}
 
 	tuple<int *, int *, int **> Model::readConditionalIntList(string s, int &sizeA, int &sizeB, int *&sizeC) {
@@ -2262,8 +2157,8 @@ newlyReachedMLMs = new noDelIntSet();
 	int *dfsI;
 	int *lowlink;
 
-	void Model::calcSCCs() {
-		cout << "Calculate SCCs..." << endl;
+	void Model::calcSCCs(bool printToConsole) {
+        if (printToConsole) cout << "Calculate SCCs..." << endl;
 
 		maxdfs = 0;
 		U = new bool[numTasks];
@@ -2292,7 +2187,8 @@ newlyReachedMLMs = new noDelIntSet();
 			if (sccSize[j] == 2)
 				numCyclicSccs++;
 		}
-		cout << "- Number of SCCs: " << numSCCs << endl;
+
+		if(printToConsole) cout << "- Number of SCCs: " << numSCCs << endl;
 
 		// generate inverse mapping
 		sccToTasks = new int *[numSCCs];
@@ -2389,7 +2285,7 @@ newlyReachedMLMs = new noDelIntSet();
 		}
 	}
 
-	void Model::constructSCCGraph(){
+	void Model::constructSCCGraph(bool printToConsole){
 		calculatedSccs = true;
 		set<int> **sccg = new set<int> *[numSCCs];
 		set<int>** sccg_rev = new set<int>*[numSCCs];
@@ -2411,13 +2307,16 @@ newlyReachedMLMs = new noDelIntSet();
 				}
 			}
 		}
-		if (numCyclicSccs == 0) {
-			cout << "- The problem is acyclic" << endl;
-		} else {
-			cout << "- The problem is cyclic" << endl;
-			cout << "- Number of cyclic SCCs: " << numCyclicSccs << endl;
-			cout << "- Number of cyclic SCCs of size 1: " << numSccOneWithSelfLoops << endl;
-		}
+
+        if (printToConsole) {
+            if (numCyclicSccs == 0) {
+                cout << "- The problem is acyclic" << endl;
+            } else {
+                cout << "- The problem is cyclic" << endl;
+                cout << "- Number of cyclic SCCs: " << numCyclicSccs << endl;
+                cout << "- Number of cyclic SCCs of size 1: " << numSccOneWithSelfLoops << endl;
+            }
+        }
 
 		// top-down mapping
 		this->sccGnumSucc = new int[numSCCs];
@@ -2511,8 +2410,8 @@ newlyReachedMLMs = new noDelIntSet();
 		  }*/
 	}
 
-	void Model::calcSCCGraph() {
-		constructSCCGraph();
+	void Model::calcSCCGraph(bool printToConsole) {
+		constructSCCGraph(printToConsole);
 		if (maintainTaskReachability != mtrNO) {
 			// reachability
 			int lastMaintained = 0;
@@ -3104,5 +3003,11 @@ newlyReachedMLMs = new noDelIntSet();
 			}
 		}
 	}
+
+    void Model::print() {
+        printSummary();
+        printActions();
+        printMethods();
+    }
 
 	/* namespace progression */

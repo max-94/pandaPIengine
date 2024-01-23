@@ -229,8 +229,8 @@ namespace progression {
 			int *sccGnumPred = nullptr;
 			int **sccG = nullptr;
 			int **sccGinverse = nullptr;
-			void constructSCCGraph();
-			void calcSCCGraph();
+			void constructSCCGraph(bool printToConsole);
+			void calcSCCGraph(bool printToConsole = true);
 
 			int* sccTopOrder;
 			bool* sccIsAcyclic;
@@ -249,11 +249,17 @@ namespace progression {
 			void computeTransitiveClosureOfMethodOrderings();
 			void buildOrderingDatastructures();
 
-			void calcSCCs();
+			void calcSCCs(bool printToConsole = true);
 
+            void calcPrecLessActionSet();
+            void removeDuplicatedPrecsInActions();
+            void calcPrecToActionMapping();
+            void calcAddToActionMapping();
+            void calcDelToActionMapping();
+            void calcTaskToMethodMapping();
+            void calcDistinctSubtasksOfMethods();
 
-        void calcAddToActionMapping();
-
+            void generateMethodRepresentation();
     private:
 			bool first = true;
 
@@ -263,8 +269,6 @@ namespace progression {
 			int *readIntList(string s, int &size);
 
 			tuple<int *, int *, int **> readConditionalIntList(string s, int &sizeA, int &sizeB, int *&sizeC);
-
-			void generateMethodRepresentation();
 
 			pair<planStep **, planStep **> initializeMethod(int method
 #ifdef TRACESOLUTION
@@ -311,7 +315,7 @@ namespace progression {
 			void methodTopSortDFS(int cur, map<int,unordered_set<int>> & adj, map<int, int> & colour, int & curpos, int* order);
 			void computeTransitiveChangeOfMethodOrderings(bool closure, int method);
 
-
+            void print();
     };
 }
 #endif /* MODEL_H_ */
