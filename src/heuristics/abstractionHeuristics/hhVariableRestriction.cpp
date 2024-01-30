@@ -2,10 +2,12 @@
 
 namespace progression {
 
-hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(htn, index) {
-    vector<int> pattern = {0,3,5,7};
-    //vector<int> pattern = {0,3,5,7,9};
-    modelFactory = new RestrictedHTNModelFactory(htn, pattern);
+hhVariableRestriction::hhVariableRestriction(Model *htn, int index, vector<int> pattern) : Heuristic(htn, index) {
+    // If no pattern is given, then chose pattern. Otherwise, use given pattern.
+    if (pattern.empty()) {
+        pattern = {0,3,5,7};
+    }
+    modelFactory = new RestrictedHTNModelFactory(htn, std::move(pattern));
 }
 
 hhVariableRestriction::~hhVariableRestriction() {

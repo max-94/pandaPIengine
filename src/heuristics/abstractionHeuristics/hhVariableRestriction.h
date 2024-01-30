@@ -2,6 +2,7 @@
 #define HTNHVARIABLERESTRICTION_H
 
 #include <cassert>
+#include <utility>
 #include "../../Model.h"
 #include "Heuristic.h"
 #include "RestrictedHTNModelFactory.h"
@@ -10,7 +11,7 @@ namespace progression {
 
 class hhVariableRestriction : public Heuristic {
 public:
-    hhVariableRestriction(Model* htn, int index);
+    hhVariableRestriction(Model* htn, int index, vector<int> pattern);
     virtual ~hhVariableRestriction();
     string getDescription() override;
     void setHeuristicValue(searchNode *n, searchNode *parent, int action) override;

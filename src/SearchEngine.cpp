@@ -293,7 +293,22 @@ int main(int argc, char *argv[]) {
 			if (hName == "zero") {
                 heuristics[i] = new hhZero(htn, i);
             } else if (hName == "variableRestriction") {
-                heuristics[i] = new hhVariableRestriction(htn, i);
+                vector<int> pattern{};
+                string patternS;
+                if (args_info.pattern_arg != nullptr) {
+                    patternS = args_info.pattern_arg;
+                }
+
+                if (!patternS.empty()) {
+                    stringstream stream(patternS);
+                    int p;
+
+                    while (stream >> p) {
+                        pattern.push_back(p);
+                    }
+                }
+
+                heuristics[i] = new hhVariableRestriction(htn, i, pattern);
 			} else if (hName == "modDepth"){
 				string invertString = (args.count("invert"))?args["invert"]:args["arg1"];
 				bool invert = false;
