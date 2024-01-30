@@ -2582,7 +2582,7 @@ namespace progression {
 		gettimeofday(&tp, NULL);
 		long startT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
 
-		cout << "- Calculating minimal implied distances and estimated costs";
+		//cout << "- Calculating minimal implied distances and estimated costs";
 
 		this->minEstimatedCosts = new int[this->numTasks];
 		this->minImpliedDistance = new int[this->numTasks];
@@ -2666,10 +2666,9 @@ namespace progression {
 		delete[] minEstimatedCostsM;
 		delete[] minImpliedDistanceM;
 
-		gettimeofday(&tp, NULL);
-		long currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-
-		cout << " (" << (currentT - startT) << " ms)" << endl;
+		//gettimeofday(&tp, NULL);
+		//long currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+		//cout << " (" << (currentT - startT) << " ms)" << endl;
 		/*
 		   for (int i = 0 ; i < this->numTasks; i++) {
 		   cout << this->taskNames[i] << " c:" << minEstimatedCosts[i] << " d:" << minImpliedDistance[i] << endl;

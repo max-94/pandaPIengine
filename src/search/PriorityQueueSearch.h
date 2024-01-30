@@ -27,10 +27,10 @@ namespace progression {
         PriorityQueueSearch();
         virtual ~PriorityQueueSearch();
 
-        template<class VisitedList, class Fringe> void
+        template<class VisitedList, class Fringe> int
         search(
             Model *htn, searchNode *tnI, int timeLimit, bool suboptimalSearch, bool printSolution, Heuristic **hF,
-            int hLength, VisitedList &visitedList, Fringe &fringe
+            int hLength, VisitedList &visitedList, Fringe &fringe, bool printToConsole = true, bool printTrace = false
         ) {
             timeval tp;
             gettimeofday(&tp, NULL);
@@ -44,17 +44,17 @@ namespace progression {
             searchNode *tnSol = nullptr;
             bool continueSearch = true;
 
-            cout << "Search Configuration" << endl;
-            cout << "- Using JAIR 2020 progression algorithm" << endl;
-
-            if (optimzeSol) {
-                cout << "- After first solution is found, search is continued until ";
-                cout << "time limit to find better solution." << endl;
-            } else {
-                cout << "- Search is stopped after first solution is found." << endl;
+            if (printToConsole) {
+                cout << "Search Configuration" << endl;
+                cout << "- Using JAIR 2020 progression algorithm" << endl;
+                if (optimzeSol) {
+                    cout << "- After first solution is found, search is continued until ";
+                    cout << "time limit to find better solution." << endl;
+                } else {
+                    cout << "- Search is stopped after first solution is found." << endl;
+                }
+                fringe.printTypeInfo();
             }
-
-            fringe.printTypeInfo();
 
             // compute the heuristic
             tnI->heuristicValue = new int[hLength];
@@ -63,22 +63,28 @@ namespace progression {
             }
 
             // add initial search node to queue
-            //if (visitedList.insertVisi(tnI))
             fringe.push(tnI);
             assert(!fringe.isEmpty());
 
             int numSearchNodes = 1;
+            int counter = 0;
 
             while (!fringe.isEmpty()) {
+                counter++;
                 searchNode *n = fringe.pop();
                 assert(n != nullptr);
+
+                if (printTrace) {
+                    cout << "Iteration " << counter << endl;
+                    cout << "Taking node" << endl;
+                    cout << "Number search nodes: " << numSearchNodes << endl;
+                }
 
                 // check whether we have seen this search node
                 if (!suboptimalSearch && !visitedList.insertVisi(n)) {
                     delete n;
                     continue;
                 }
-                //assert(!visitedList.insertVisi(n));
 
                 if (!suboptimalSearch && htn->isGoal(n)) {
                     // A non-early goal test makes only sense in an optimal planning setting.
@@ -87,8 +93,12 @@ namespace progression {
                     currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
                     tnSol = handleNewSolution(n, tnSol, currentT - startT);
                     continueSearch = this->optimzeSol;
-                    if (!continueSearch)
+                    if (!continueSearch) {
+                        if (printTrace) {
+                            cout << "Solution found" << endl;
+                        }
                         break;
+                    }
                 }
 
                 if (n->numAbstract == 0) {
@@ -107,7 +117,6 @@ namespace progression {
                             delete n2;
                             continue;
                         }
-                        //assert(!visitedList.insertVisi(n2));
 
                         // compute the heuristic
                         n2->heuristicValue = new int[hLength];
@@ -157,17 +166,32 @@ namespace progression {
                     int decomposedStep = rand() % n->numAbstract;
                     int task = n->unconstraintAbstract[decomposedStep]->task;
 
+                    if (printTrace) {
+                        cout << "Processing task " << task << endl;
+                    }
+
                     for (int i = 0; i < htn->numMethodsForTask[task]; i++) {
                         int method = htn->taskToMethods[task][i];
+                        if (printTrace) {
+                            cout << "Processing method " << method << endl;
+                        }
                         searchNode *n2 = htn->decompose(n, decomposedStep, method);
                         numSearchNodes++;
                         if (!n2->goalReachable) { // decomposition has detected unsol
+                            if (printTrace) {
+                                cout << "Delete... " << endl;
+                            }
+
                             delete n2;
                             continue; // with next method
                         }
 
                         // check whether we have seen this one already
                         if (suboptimalSearch && !visitedList.insertVisi(n2)) {
+                            if (printTrace) {
+                                cout << "Delete... " << endl;
+                            }
+
                             delete n2;
                             continue;
                         }
@@ -186,13 +210,24 @@ namespace progression {
 								}
 
 								if (!found)
+                                    if (printTrace) {
+                                        cout << "Computing heuristic" << endl;
+                                    }
+
 	                                hF[ih]->setHeuristicValue(n2, n, decomposedStep, method);
                             } else {
+                                if (printTrace) {
+                                    cout << "Not reachable" << endl;
+                                }
                                 n2->heuristicValue[ih] = UNREACHABLE;
                             }
                         }
                         
 			            if (!n2->goalReachable) { // heuristic has detected unsol
+                            if (printTrace) {
+                                cout << "Delete... " << endl;
+                            }
+
                             if ((suboptimalSearch) && (visitedList.canDeleteProcessedNodes)) {
                                 delete n2;
                             }
@@ -206,10 +241,17 @@ namespace progression {
                             currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
                             tnSol = handleNewSolution(n2, tnSol, currentT - startT);
                             continueSearch = this->optimzeSol;
-                            if (!continueSearch)
+                            if (!continueSearch) {
+                                if (printTrace) {
+                                    cout << "Solution found" << endl;
+                                }
                                 break;
+                            }
                         }
 
+                        if (printTrace) {
+                            cout << "Pushing to fringe" << endl;
+                        }
                         fringe.push(n2);
                     }
                 }
@@ -249,68 +291,81 @@ namespace progression {
                     delete n;
             }
 
-            gettimeofday(&tp, NULL);
-            currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-            cout << "Search Results" << endl;
-            cout << "- Search time " << double(currentT - startT) / 1000 << " seconds" << endl;
-            cout << "- Visited list time " << visitedList.time / 1000 << " seconds" << endl;
-            cout << "- Visited list inserts " << visitedList.attemptedInsertions << endl;
-            cout << "- Visited list pruned " << visitedList.attemptedInsertions - visitedList.uniqueInsertions << endl;
-            cout << "- Visited list contains " << visitedList.uniqueInsertions << endl;
-            cout << "- Visited list hash collisions " << visitedList.subHashCollision << endl;
-			cout << "- Visited list used hash buckets " << visitedList.attemptedInsertions - visitedList.subHashCollision << endl;
-            cout << "- Generated "
-                 << (numSearchNodes + htn->numOneModActions + htn->numOneModMethods + htn->numEffLessProg)
-                 << " search nodes" << endl;
-            cout << "  Calculated heuristic for " << numSearchNodes << " nodes" << endl;
-            cout << "  One modifications " << (htn->numOneModActions + htn->numOneModMethods) << endl;
-            cout << "  Effectless actions " << htn->numEffLessProg << endl;
-            cout << "- including " << (htn->numOneModActions) << " one modification actions" << endl;
-            cout << "- including " << (htn->numOneModMethods) << " one modification methods" << endl;
-            cout << "- and       " << (htn->numEffLessProg) << " progressions of effectless actions" << endl;
-            cout << "- Generated " << int(double(numSearchNodes) / (currentT - startT) * 1000) << " nodes per second"
-                 << endl;
-            cout << "- Final fringe contains " << fringe.size() << " nodes" << endl;
-
-            if (this->foundSols > 1) {
-                cout << "- Found " << this->foundSols << " solutions." << endl;
-                cout << "  - first solution after " << this->firstSolTime << "ms." << endl;
-                cout << "  - best solution after " << this->bestSolTime << "ms." << endl;
+            // Extract solution costs if one exists.
+            int solutionCosts = UNREACHABLE;
+            if (tnSol != nullptr) {
+                auto[sol, sLength] = extractSolutionFromSearchNode(htn, tnSol);
+                solutionCosts = sLength;
             }
 
-            if (tnSol != nullptr) {
-                #ifdef TRACESOLUTION
-                auto[sol, sLength] = extractSolutionFromSearchNode(htn, tnSol);
-                #else
-                auto [sol,sLength] = printTraceOfSearchNode(htn,tnSol);
-                #endif
+            if (printToConsole) {
+                gettimeofday(&tp, NULL);
+                currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+                cout << "Search Results" << endl;
+                cout << "- Search time " << double(currentT - startT) / 1000 << " seconds" << endl;
+                cout << "- Visited list time " << visitedList.time / 1000 << " seconds" << endl;
+                cout << "- Visited list inserts " << visitedList.attemptedInsertions << endl;
+                cout << "- Visited list pruned " << visitedList.attemptedInsertions - visitedList.uniqueInsertions << endl;
+                cout << "- Visited list contains " << visitedList.uniqueInsertions << endl;
+                cout << "- Visited list hash collisions " << visitedList.subHashCollision << endl;
+                cout << "- Visited list used hash buckets " << visitedList.attemptedInsertions - visitedList.subHashCollision << endl;
+                cout << "- Generated "
+                     << (numSearchNodes + htn->numOneModActions + htn->numOneModMethods + htn->numEffLessProg)
+                     << " search nodes" << endl;
+                cout << "  Calculated heuristic for " << numSearchNodes << " nodes" << endl;
+                cout << "  One modifications " << (htn->numOneModActions + htn->numOneModMethods) << endl;
+                cout << "  Effectless actions " << htn->numEffLessProg << endl;
+                cout << "- including " << (htn->numOneModActions) << " one modification actions" << endl;
+                cout << "- including " << (htn->numOneModMethods) << " one modification methods" << endl;
+                cout << "- and       " << (htn->numEffLessProg) << " progressions of effectless actions" << endl;
+                cout << "- Generated " << int(double(numSearchNodes) / (currentT - startT) * 1000) << " nodes per second"
+                     << endl;
+                cout << "- Final fringe contains " << fringe.size() << " nodes" << endl;
 
-                cout << "- Status: Solved" << endl;
-                cout << "- Found solution of length " << sLength << endl;
-                cout << "- Total costs of actions: " << tnSol->actionCosts << endl;
+                if (this->foundSols > 1) {
+                    cout << "- Found " << this->foundSols << " solutions." << endl;
+                    cout << "  - first solution after " << this->firstSolTime << "ms." << endl;
+                    cout << "  - best solution after " << this->bestSolTime << "ms." << endl;
+                }
 
-                if (printSolution)
-                    cout << sol << endl;
+                if (tnSol != nullptr) {
+                    #ifdef TRACESOLUTION
+                    auto[sol, sLength] = extractSolutionFromSearchNode(htn, tnSol);
+                    #else
+                    auto [sol,sLength] = printTraceOfSearchNode(htn,tnSol);
+                    #endif
 
-                #ifdef TRACKLMSFULL
-                assert(tnSol->lookForT->size == 0);
-                assert(tnSol->lookForM->size == 0);
-                assert(tnSol->lookForF->size == 0);
-                #endif
-            } else if (reachedTimeLimit) {
-                cout << "- Status: Timeout" << endl;
-            } else {
-                cout << "- Status: Proven unsolvable" << endl;
+                    cout << "- Status: Solved" << endl;
+                    cout << "- Found solution of length " << sLength << endl;
+                    cout << "- Total costs of actions: " << tnSol->actionCosts << endl;
+
+                    if (printSolution) cout << sol << endl;
+
+                    #ifdef TRACKLMSFULL
+                    assert(tnSol->lookForT->size == 0);
+                    assert(tnSol->lookForM->size == 0);
+                    assert(tnSol->lookForF->size == 0);
+                    #endif
+                } else if (reachedTimeLimit) {
+                    cout << "- Status: Timeout" << endl;
+                } else {
+                    cout << "- Status: Proven unsolvable" << endl;
+                }
             }
 
             #ifndef NDEBUG
-            cout << "Deleting elements in fringe..." << endl;
+            if (printToConsole) {
+                cout << "Deleting elements in fringe..." << endl;
+            }
+
             while (!fringe.isEmpty()) {
                 searchNode *n = fringe.pop();
                 delete n;
             }
             delete tnSol;
             #endif
+
+            return solutionCosts;
         }
 
 

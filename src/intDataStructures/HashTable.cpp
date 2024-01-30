@@ -8,6 +8,10 @@ hash_table::hash_table(int numBuckets): buckets(numBuckets) {
 	for (int i = 0; i < buckets; i++) table[i] = nullptr;
 }
 
+hash_table::~hash_table() {
+    free(table);
+}
+
 void** hash_table::get(size_t x){
 	return table + (x % buckets);
 }

@@ -58,13 +58,13 @@ public:
 		// 0: keep the costs of the input model (including the weird things mentioned above)
 		// 1: set the costs of all actions to 1
         if (estimate == estCOSTS) {
-			cout << "Generate 1" << endl << endl;
+			//cout << "Generate 1" << endl << endl;
             heuristicModel = factory->getRCmodelSTRIPS(0,0); // costs of methods need to be zero
         } else if (estimate == estMIXED){
-			cout << "Generate 2" << endl << endl;
+			//cout << "Generate 2" << endl << endl;
             heuristicModel = factory->getRCmodelSTRIPS(1,0); // estimate distance -> method costs 1, actions keep their costs
         } else if (estimate == estDISTANCE){
-			cout << "Generate 3" << endl << endl;
+			//cout << "Generate 3" << endl << endl;
             heuristicModel = factory->getRCmodelSTRIPS(1,1); // estimate distance -> method costs 1, actions costs 1
         } else {
 			cout << "BLUUUUUP";
@@ -90,9 +90,7 @@ public:
                     cout << "- a combination of cost estimate and admissible heuristic is used -> using admissible correction of heuristic value (this is bad when you do not want to find optimal plans).";
                 }
                 storeCuts = false;
-                cout
-                        << "- the option \"store cuts\" of the RC heuristic can only be used with the inner heuristic LM-Cut. It will be disabled."
-                        << endl;
+                //cout << "- the option \"store cuts\" of the RC heuristic can only be used with the inner heuristic LM-Cut. It will be disabled." << endl;
 			}
 		}
 		if (correctTaskCount && !useAdmissibleCostEstimate) {

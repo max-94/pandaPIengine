@@ -77,7 +77,7 @@ uint64_t hash_state_sequence(const vector<uint64_t> & state){
 
 
 
-VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequences) {
+VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool _taskHash, bool _taskSequenceHash, bool _topologicalOrdering, bool _orderPairs, bool _layers, bool _allowGIcheck, bool _allowedToUseParallelSequences, bool printToConsole) {
     this->htn = m;
 	this->noVisitedCheck = _noVisitedCheck;
 	this->noReopening = _noReOpening;
@@ -102,36 +102,41 @@ VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool
 	else
 		this->bitsNeededPerTask = sizeof(int)*8 -  __builtin_clz(m->numTasks); // one more ID is needed to separate parallel sequences
 
-	cout << "Visited List configured" << endl;
-	if (this->noVisitedCheck)
-		cout << "- disabled" << endl;
-	else {
-		if (this->useTotalOrderMode)
-			cout << "- mode: total order" << endl;
-		else if (this->useSequencesMode)
-			cout << "- mode: parallel sequences order" << endl;
-		else
-			cout << "- mode: partial order" << endl;
-		
-		cout << "- hashs to use: state";
-		if (this->taskHash) cout << " task";
-		if (this->sequenceHash) cout << " task-sequence";
-		cout << endl;
-	
-		cout << "- memory information:";
-		if (this->topologicalOrdering) cout << " topological ordering";
-		if (this->orderPairs && ! (this->useTotalOrderMode || this->useSequencesMode)) cout << " order-pairs";
-		if (this->layers && ! (this->useTotalOrderMode || this->useSequencesMode)) cout << " layer";
-		cout << endl;
-		
-		
-		if ((this->useTotalOrderMode || this->useSequencesMode) && !this->topologicalOrdering)
-			cout << "- ATTENTION: pruning is " << color(RED,"INCOMPLETE") << endl;
-	}
-	cout << "- Visited list allows deletion of search nodes: " << ((this->canDeleteProcessedNodes) ? "true" : "false")
-         << endl;
+    if (printToConsole) {
+        cout << "Visited List configured" << endl;
+        if (this->noVisitedCheck)
+            cout << "- disabled" << endl;
+        else {
+            if (this->useTotalOrderMode)
+                cout << "- mode: total order" << endl;
+            else if (this->useSequencesMode)
+                cout << "- mode: parallel sequences order" << endl;
+            else
+                cout << "- mode: partial order" << endl;
+
+            cout << "- hashs to use: state";
+            if (this->taskHash) cout << " task";
+            if (this->sequenceHash) cout << " task-sequence";
+            cout << endl;
+
+            cout << "- memory information:";
+            if (this->topologicalOrdering) cout << " topological ordering";
+            if (this->orderPairs && ! (this->useTotalOrderMode || this->useSequencesMode)) cout << " order-pairs";
+            if (this->layers && ! (this->useTotalOrderMode || this->useSequencesMode)) cout << " layer";
+            cout << endl;
+
+
+            if ((this->useTotalOrderMode || this->useSequencesMode) && !this->topologicalOrdering)
+                cout << "- ATTENTION: pruning is " << color(RED,"INCOMPLETE") << endl;
+        }
+        cout << "- Visited list allows deletion of search nodes: " << ((this->canDeleteProcessedNodes) ? "true" : "false")
+             << endl;
+    }
 }
 
+VisitedList::~VisitedList() {
+    delete this->stateTable;
+}
 
 
 void dfsdfs(planStep *s, int depth, set<planStep *> &psp, set<pair<int, int>> &orderpairs,
