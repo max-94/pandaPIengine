@@ -182,6 +182,7 @@ namespace progression {
                                 cout << "Delete... " << endl;
                             }
 
+                            numSearchNodes--;
                             delete n2;
                             continue; // with next method
                         }
@@ -192,6 +193,7 @@ namespace progression {
                                 cout << "Delete... " << endl;
                             }
 
+                            numSearchNodes--;
                             delete n2;
                             continue;
                         }
@@ -231,6 +233,7 @@ namespace progression {
                             if ((suboptimalSearch) && (visitedList.canDeleteProcessedNodes)) {
                                 delete n2;
                             }
+                            numSearchNodes--;
                             continue; // with next method
                         }
 

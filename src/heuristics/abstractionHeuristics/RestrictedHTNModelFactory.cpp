@@ -283,6 +283,8 @@ Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode 
             cout << " " << model->subTasks[0][st];
         }
         cout << endl;
+
+        model->printSimple();
     }
 
     return model;

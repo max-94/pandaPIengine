@@ -164,7 +164,7 @@ namespace progression {
         PriorityQueueSearch search;
         OneQueueWAStarFringe fringe(aStarType, aStarWeight, hLength);
 
-        int solutionCosts = search.search(restrictedModel, tni, 1800, suboptimalSearch, false, heuristics, hLength, visitedList, fringe, false);
+        int solutionCosts = search.search(restrictedModel, tni, 1800, suboptimalSearch, false, heuristics, hLength, visitedList, fringe, false, false);
         delete[] heuristics;
         return solutionCosts;
     }
