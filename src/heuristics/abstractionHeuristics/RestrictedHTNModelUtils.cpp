@@ -141,4 +141,31 @@ namespace progression {
             }
         }
     }
+
+    int solveRestrictedModel(Model* restrictedModel, searchNode* tni) {
+        int hLength = 1;
+        auto heuristics = new Heuristic*[hLength];
+        heuristics[0] = new hhRC2<hsAddFF>(restrictedModel, 0, estDISTANCE, true);
+        ((hhRC2<hsAddFF>*)heuristics[0])->sasH->heuristic = sasFF;
+
+        int aStarWeight = 1;
+        aStar aStarType = gValPathCosts;
+        bool suboptimalSearch = false;
+        bool noVisitedList = false;
+        bool allowGIcheck = true;
+        bool taskHash = true;
+        bool taskSequenceHash = true;
+        bool topologicalOrdering = true;
+        bool orderPairsHash = true;
+        bool layerHash = true;
+        bool allowParalleSequencesMode = true;
+
+        VisitedList visitedList(restrictedModel, noVisitedList, suboptimalSearch, taskHash, taskSequenceHash, topologicalOrdering, orderPairsHash, layerHash, allowGIcheck, allowParalleSequencesMode, false);
+        PriorityQueueSearch search;
+        OneQueueWAStarFringe fringe(aStarType, aStarWeight, hLength);
+
+        int solutionCosts = search.search(restrictedModel, tni, 1800, suboptimalSearch, false, heuristics, hLength, visitedList, fringe, false, false);
+        delete[] heuristics;
+        return solutionCosts;
+    }
 }

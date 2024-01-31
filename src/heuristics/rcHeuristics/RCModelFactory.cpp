@@ -22,7 +22,7 @@ Model* RCModelFactory::getRCmodelSTRIPS() {
 }
 
 Model* RCModelFactory::getRCmodelSTRIPS(int costsMethodActions, int costRegularActions) {
-	cout << "RC Factory: CMA " << costsMethodActions << endl;
+	//cout << "RC Factory: CMA " << costsMethodActions << endl;
 	Model* rc = new Model();
 	rc->isHtnModel = false;
 	rc->numStateBits = htn->numStateBits + htn->numActions + htn->numTasks;

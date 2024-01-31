@@ -2066,6 +2066,45 @@ namespace progression {
 		}
 	}
 
+    void Model:: printSimple() const {
+        cout << "Initial state:";
+        for (int i = 0; i < s0Size; i++) {
+            cout << " " << s0List[i];
+        }
+        cout << endl << endl;
+
+        for (int aI = 0; aI < numActions; aI++) {
+            cout << "action: " << aI << endl;
+
+            cout << "prec { ";
+            for (int i = 0; i < numPrecs[aI]; i++) {
+                cout << precLists[aI][i] << " ";
+            }
+            cout << "}" << endl;
+
+            cout << "add  { ";
+            for (int i = 0; i < numAdds[aI]; i++) {
+                cout << addLists[aI][i] << " ";
+            }
+            cout << "}" << endl;
+
+            cout << "del  { ";
+            for (int i = 0; i < numDels[aI]; i++) {
+                cout << delLists[aI][i] << " ";
+            }
+            cout << "}" << endl << endl;
+        }
+
+        for (int mI = 0; mI < numMethods; mI++) {
+            cout << "Method: " << mI << endl;
+            cout << "Decomposing: " << decomposedTask[mI] << endl;
+            for (int i = 0; i < numSubTasks[mI]; i++) {
+                cout << subTasks[mI][i] << " ";
+            }
+            cout << endl << endl;
+        }
+    }
+
 	void Model::printSummary() {
 		cout << "- State has " << numStateBits << " bits divided into " << numVars
 			<< " mutex groups." << endl;
@@ -2582,7 +2621,7 @@ namespace progression {
 		gettimeofday(&tp, NULL);
 		long startT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
 
-		cout << "- Calculating minimal implied distances and estimated costs";
+		//cout << "- Calculating minimal implied distances and estimated costs";
 
 		this->minEstimatedCosts = new int[this->numTasks];
 		this->minImpliedDistance = new int[this->numTasks];
@@ -2666,10 +2705,9 @@ namespace progression {
 		delete[] minEstimatedCostsM;
 		delete[] minImpliedDistanceM;
 
-		gettimeofday(&tp, NULL);
-		long currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-
-		cout << " (" << (currentT - startT) << " ms)" << endl;
+		//gettimeofday(&tp, NULL);
+		//long currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+		//cout << " (" << (currentT - startT) << " ms)" << endl;
 		/*
 		   for (int i = 0 ; i < this->numTasks; i++) {
 		   cout << this->taskNames[i] << " c:" << minEstimatedCosts[i] << " d:" << minImpliedDistance[i] << endl;

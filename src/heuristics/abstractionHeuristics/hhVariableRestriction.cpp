@@ -2,10 +2,12 @@
 
 namespace progression {
 
-hhVariableRestriction::hhVariableRestriction(Model *htn, int index) : Heuristic(htn, index) {
-    //vector<int> pattern = {0,1,2,3,4,5,6,7,8,9,10};
-    vector<int> pattern = {0,3,5,7,9};
-    modelFactory = new RestrictedHTNModelFactory(htn, pattern);
+hhVariableRestriction::hhVariableRestriction(Model *htn, int index, vector<int> pattern) : Heuristic(htn, index) {
+    // If no pattern is given, then chose pattern. Otherwise, use given pattern.
+    if (pattern.empty()) {
+        pattern = {0,3,5,7};
+    }
+    modelFactory = new RestrictedHTNModelFactory(htn, std::move(pattern));
 }
 
 hhVariableRestriction::~hhVariableRestriction() {
@@ -17,24 +19,22 @@ string hhVariableRestriction::getDescription() {
 }
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int action) {
-    // TODO: Was muss man hier machen?
-    n->heuristicValue[index] = 0;
-    n->goalReachable = true;
+    setHeuristicValue(n, parent, 0, 0);
 }
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int absTask, int method) {
-    Model* restrictedModel = modelFactory->getRestrictedHTNModel(n);
-
+    Model* restrictedModel = modelFactory->getRestrictedHTNModel(n, false);
     auto restrictedRootSearchNode = restrictedModel->prepareTNi(restrictedModel);
+
     restrictedModel->calcSCCs(false);
     restrictedModel->calcSCCGraph(false);
     restrictedModel->updateReachability(restrictedRootSearchNode);
 
-    // TODO: Call search procedure and set value.
-    n->heuristicValue[index] = 0;
-    n->goalReachable = true;
+    int hValue = solveRestrictedModel(restrictedModel, restrictedRootSearchNode);
 
-    delete restrictedRootSearchNode;
+    n->heuristicValue[index] = hValue;
+    n->goalReachable = hValue != UNREACHABLE;
+
     delete restrictedModel;
 }
 }
