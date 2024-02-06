@@ -294,11 +294,11 @@ int main(int argc, char *argv[]) {
                 heuristics[i] = new hhZero(htn, i);
             } else if (hName == "variableRestriction") {
                 vector<int> pattern{};
-                PatternSelection mode{};
+                patternSelection::PatternSelection mode{};
 
                 // PatternSelection == STATIC
                 if (args_info.patternStatic_arg != nullptr) {
-                    mode = PatternSelection::STATIC;
+                    mode = patternSelection::PatternSelection::STATIC;
                     string patternS = args_info.patternStatic_arg;
 
                     if (!patternS.empty()) {
@@ -313,14 +313,14 @@ int main(int argc, char *argv[]) {
                 // PatternSelection == ACYCLIC
                 else if (args_info.patternAcyclic_flag) {
                     if (htn->numCyclicSccs > 0) {
-                        mode = PatternSelection::ACYCLIC;
+                        mode = patternSelection::PatternSelection::ACYCLIC;
                     } else {
-                        mode = PatternSelection::RANDOM;
+                        mode = patternSelection::PatternSelection::STATIC;
                     }
                 }
                 // Default option.
                 else {
-                    mode = PatternSelection::RANDOM;
+                    mode = patternSelection::PatternSelection::STATIC;
                 }
 
                 heuristics[i] = new hhVariableRestriction(htn, i, mode, pattern);

@@ -2,17 +2,15 @@
 
 namespace progression {
 
-hhVariableRestriction::hhVariableRestriction(Model *htn, int index, PatternSelection mode, vector<int> pattern) : Heuristic(htn, index) {
+hhVariableRestriction::hhVariableRestriction(Model *htn, int index, patternSelection::PatternSelection mode, vector<int> pattern) : Heuristic(htn, index) {
     patternSelection::PatternSelectionResult result{};
 
-    if (mode == PatternSelection::STATIC) {
+    if (mode == patternSelection::PatternSelection::STATIC) {
         result.pattern = std::move(pattern);
         result.numTasksRemoved = 0;
         result.isTaskRemoved = vector<bool>(htn->numTasks, false);
-    } else if (mode == PatternSelection::ACYCLIC) {
+    } else if (mode == patternSelection::PatternSelection::ACYCLIC) {
         result = patternSelection::createAcyclicPattern(htn);
-    } else if (mode == PatternSelection::RANDOM) {
-        result = patternSelection::createRandomPattern(htn);
     } else {
         cout << "Unknown mode. Exit." << endl;
         exit(0);

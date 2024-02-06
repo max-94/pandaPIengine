@@ -10,11 +10,9 @@
 
 namespace progression {
 
-enum class PatternSelection { STATIC, ACYCLIC, RANDOM };
-
 class hhVariableRestriction : public Heuristic {
 public:
-    hhVariableRestriction(Model* htn, int index, PatternSelection mode, vector<int> pattern);
+    hhVariableRestriction(Model* htn, int index, patternSelection::PatternSelection mode, vector<int> pattern);
     virtual ~hhVariableRestriction();
     string getDescription() override;
     void setHeuristicValue(searchNode *n, searchNode *parent, int action) override;
