@@ -3,18 +3,20 @@
 namespace progression {
 
 hhVariableRestriction::hhVariableRestriction(Model *htn, int index, PatternSelection mode, vector<int> pattern) : Heuristic(htn, index) {
+    patternSelection::PatternSelectionResult result{};
+
     if (mode == PatternSelection::STATIC) {
         // Nothing to do
     } else if (mode == PatternSelection::ACYCLIC) {
-        patternSelection::createAcyclicPattern(htn);
+        result = patternSelection::createAcyclicPattern(htn);
     } else if (mode == PatternSelection::RANDOM) {
-        patternSelection::createRandomPattern(htn);
+        result = patternSelection::createRandomPattern(htn);
     } else {
         cout << "Unknown mode. Exit." << endl;
         exit(0);
     }
 
-    modelFactory = new RestrictedHTNModelFactory(htn, std::move(pattern));
+    modelFactory = new RestrictedHTNModelFactory(htn, std::move(result.pattern));
 }
 
 hhVariableRestriction::~hhVariableRestriction() {
