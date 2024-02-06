@@ -18,6 +18,12 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index, PatternSelec
         exit(0);
     }
 
+    cout << "Using following pattern = {";
+    for (int p : result.pattern) {
+        cout << " " << p;
+    }
+    cout << " }" << endl;
+
     modelFactory = new RestrictedHTNModelFactory(htn, result);
 }
 
