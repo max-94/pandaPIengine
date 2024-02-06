@@ -294,21 +294,36 @@ int main(int argc, char *argv[]) {
                 heuristics[i] = new hhZero(htn, i);
             } else if (hName == "variableRestriction") {
                 vector<int> pattern{};
-                string patternS;
-                if (args_info.pattern_arg != nullptr) {
-                    patternS = args_info.pattern_arg;
-                }
+                PatternSelection mode{};
 
-                if (!patternS.empty()) {
-                    stringstream stream(patternS);
-                    int p;
+                // PatternSelection == STATIC
+                if (args_info.patternStatic_arg != nullptr) {
+                    mode = PatternSelection::STATIC;
+                    string patternS = args_info.patternStatic_arg;
 
-                    while (stream >> p) {
-                        pattern.push_back(p);
+                    if (!patternS.empty()) {
+                        stringstream stream(patternS);
+                        int p;
+
+                        while (stream >> p) {
+                            pattern.push_back(p);
+                        }
                     }
                 }
+                // PatternSelection == ACYCLIC
+                else if (args_info.patternAcyclic_flag) {
+                    if (htn->numCyclicSccs > 0) {
+                        mode = PatternSelection::ACYCLIC;
+                    } else {
+                        mode = PatternSelection::RANDOM;
+                    }
+                }
+                // Default option.
+                else {
+                    mode = PatternSelection::RANDOM;
+                }
 
-                heuristics[i] = new hhVariableRestriction(htn, i, pattern);
+                heuristics[i] = new hhVariableRestriction(htn, i, mode, pattern);
 			} else if (hName == "modDepth"){
 				string invertString = (args.count("invert"))?args["invert"]:args["arg1"];
 				bool invert = false;
