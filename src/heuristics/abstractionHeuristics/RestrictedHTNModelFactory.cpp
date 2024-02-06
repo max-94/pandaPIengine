@@ -1,12 +1,12 @@
 #include "RestrictedHTNModelFactory.h"
 
-RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, vector<int> pattern) {
+RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, const patternSelection::PatternSelectionResult& patternSelectionResult) {
     // Process pattern. Verify that it is valid and sort it.
+    pattern = patternSelectionResult.pattern;
     for (int fact : pattern) {
         assert(fact < htn->numStateBits);
     }
     sort(pattern.begin(), pattern.end());
-    this->pattern = pattern;
 
     // Process facts.
     for (int f = 0; f < pattern.size(); f++) {
@@ -74,6 +74,13 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, ve
     methods = vector<Method>(htn->numMethods);
     vector<vector<int>> orderedSubtasks = orderSubTasks(htn);
 
+    // Remove marked tasks.
+    if (patternSelectionResult.numTasksRemoved > 0) {
+        for (vector<int>& subtasks : orderedSubtasks) {
+            std::erase_if(subtasks, [patternSelectionResult](int task) { return patternSelectionResult.isTaskRemoved[task]; });
+        }
+    }
+
     for (int m = 0; m < htn->numMethods; m++) {
         Method method{};
         method.id = m;
@@ -95,6 +102,8 @@ Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode 
 
     vector<int> initialTaskNetwork = computeInitTaskNetwork(n);
     vector<bool> taskReachable = computeTaskReachability(initialTaskNetwork, numActions, numAbstracts, numMethods);
+
+    // Reusing initial abstract task
     if (!taskReachable[initialTask]) {
         taskReachable[initialTask] = true;
         numAbstracts++;

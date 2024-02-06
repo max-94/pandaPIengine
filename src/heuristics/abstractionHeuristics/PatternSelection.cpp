@@ -6,6 +6,7 @@ PatternSelectionResult createAcyclicPattern(Model* htn) {
     // Prepare data structures.
     vector<bool> isFactRemoved(htn->numStateBits, false);
     vector<bool> isTaskRemoved(htn->numTasks, false);
+    int numTasksRemoved = 0;
 
     // Extract facts that should be removed and all cyclic abstract tasks.
     for (int iCyclicScc = 0; iCyclicScc < htn->numCyclicSccs; iCyclicScc++) {
@@ -14,6 +15,7 @@ PatternSelectionResult createAcyclicPattern(Model* htn) {
         for (int iSccTask = 0; iSccTask < htn->sccSize[scc]; iSccTask++) {
             int task = htn->sccToTasks[scc][iSccTask];
             isTaskRemoved[task] = true; // Remove abstract task.
+            numTasksRemoved++;
 
             for (int iMethod = 0; iMethod < htn->numMethodsForTask[task]; iMethod++) {
                 int method = htn->taskToMethods[task][iMethod];
@@ -42,7 +44,7 @@ PatternSelectionResult createAcyclicPattern(Model* htn) {
     }
 
     // Compute final pattern. It is the complement of removedFacts w.r.t model's state bits.
-    PatternSelectionResult result{ vector<int>{}, std::move(isTaskRemoved) };
+    PatternSelectionResult result{ vector<int>{}, numTasksRemoved, std::move(isTaskRemoved) };
     for (int fact = 0; fact < htn->numStateBits; fact++) {
         if (!isFactRemoved[fact]) result.pattern.push_back(fact);
     }

@@ -6,6 +6,7 @@
 namespace patternSelection {
     struct PatternSelectionResult {
         vector<int> pattern;
+        int numTasksRemoved;
         vector<bool> isTaskRemoved;
     };
 

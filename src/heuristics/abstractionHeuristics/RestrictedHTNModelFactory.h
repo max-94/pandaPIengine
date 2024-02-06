@@ -5,6 +5,7 @@
 
 #include "../../Model.h"
 #include "RestrictedHTNModelUtils.h"
+#include "PatternSelection.h"
 
 namespace progression {
 
@@ -45,7 +46,7 @@ struct Method {
 
 class RestrictedHTNModelFactory {
 public:
-    RestrictedHTNModelFactory(Model* htn, vector<int> pattern); //
+    RestrictedHTNModelFactory(Model* htn, const patternSelection::PatternSelectionResult& patternSelectionResult); //
     ~RestrictedHTNModelFactory() = default;
 
     Model* getRestrictedHTNModel(progression::searchNode *n, bool printModel = false);

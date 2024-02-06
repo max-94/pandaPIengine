@@ -6,7 +6,9 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index, PatternSelec
     patternSelection::PatternSelectionResult result{};
 
     if (mode == PatternSelection::STATIC) {
-        // Nothing to do
+        result.pattern = std::move(pattern);
+        result.numTasksRemoved = 0;
+        result.isTaskRemoved = vector<bool>(htn->numTasks, false);
     } else if (mode == PatternSelection::ACYCLIC) {
         result = patternSelection::createAcyclicPattern(htn);
     } else if (mode == PatternSelection::RANDOM) {
@@ -16,7 +18,7 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index, PatternSelec
         exit(0);
     }
 
-    modelFactory = new RestrictedHTNModelFactory(htn, std::move(result.pattern));
+    modelFactory = new RestrictedHTNModelFactory(htn, result);
 }
 
 hhVariableRestriction::~hhVariableRestriction() {
