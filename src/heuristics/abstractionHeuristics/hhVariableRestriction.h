@@ -6,6 +6,7 @@
 #include "../../Model.h"
 #include "Heuristic.h"
 #include "RestrictedHTNModelFactory.h"
+#include "PatternSelection.h"
 
 namespace progression {
 

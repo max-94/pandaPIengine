@@ -5,13 +5,10 @@ namespace progression {
 hhVariableRestriction::hhVariableRestriction(Model *htn, int index, PatternSelection mode, vector<int> pattern) : Heuristic(htn, index) {
     if (mode == PatternSelection::STATIC) {
         // Nothing to do
-        cout << "STATIC" << endl;
     } else if (mode == PatternSelection::ACYCLIC) {
-        // TODO: Call procedure to calculate acyclic pattern.
-        cout << "ACYCLIC" << endl;
+        patternSelection::createAcyclicPattern(htn);
     } else if (mode == PatternSelection::RANDOM) {
-        // TODO: Implement this behavior.
-        cout << "RANDOM" << endl;
+        patternSelection::createRandomPattern(htn);
     } else {
         cout << "Unknown mode. Exit." << endl;
         exit(0);
