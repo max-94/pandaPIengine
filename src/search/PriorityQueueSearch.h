@@ -268,18 +268,20 @@ namespace progression {
                     currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
 
                     if (((currentT - lastOutput) / 1000) > 0) {
-                        cout << setw(4) << int((currentT - startT) / 1000) << "s "
-                             << "visitime " << setw(7) << fixed << setprecision(2) << visitedList.time / 1000 << "s"
-                             << " generated nodes " << setw(9) << allnodes
-                             << " nodes/sec " << setw(7) << int(double(allnodes) / (currentT - startT) * 1000)
-                             << " cur h " << setw(4) << n->heuristicValue[0]
-                             << " mod.depth " << setw(4) << n->modificationDepth
-                             << " inserts " << setw(9) << visitedList.attemptedInsertions
-                             << " dups " << setw(9) << visitedList.attemptedInsertions - visitedList.uniqueInsertions
-                             << " size " << setw(9) << visitedList.uniqueInsertions
-                             << " hash fail " << setw(6) << visitedList.subHashCollision
-							 << " hash buckets " << setw(6) << visitedList.attemptedInsertions - visitedList.subHashCollision	
-                             << endl;
+                        if (printToConsole) {
+                            cout << setw(4) << int((currentT - startT) / 1000) << "s "
+                                 << "visitime " << setw(7) << fixed << setprecision(2) << visitedList.time / 1000 << "s"
+                                 << " generated nodes " << setw(9) << allnodes
+                                 << " nodes/sec " << setw(7) << int(double(allnodes) / (currentT - startT) * 1000)
+                                 << " cur h " << setw(4) << n->heuristicValue[0]
+                                 << " mod.depth " << setw(4) << n->modificationDepth
+                                 << " inserts " << setw(9) << visitedList.attemptedInsertions
+                                 << " dups " << setw(9) << visitedList.attemptedInsertions - visitedList.uniqueInsertions
+                                 << " size " << setw(9) << visitedList.uniqueInsertions
+                                 << " hash fail " << setw(6) << visitedList.subHashCollision
+                                 << " hash buckets " << setw(6) << visitedList.attemptedInsertions - visitedList.subHashCollision
+                                 << endl;
+                        }
                         lastOutput = currentT;
                     }
 
