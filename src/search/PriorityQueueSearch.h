@@ -74,6 +74,10 @@ namespace progression {
                 searchNode *n = fringe.pop();
                 assert(n != nullptr);
 
+                //if (printToConsole) {
+                //    cout << "Counter=" << counter << "; hValue=" << n->heuristicValue[0] << "; depth=" << n->modificationDepth << endl;
+                //}
+
                 if (printTrace) {
                     cout << "Iteration " << counter << endl;
                     cout << "Taking node" << endl;
@@ -268,7 +272,7 @@ namespace progression {
                     currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
 
                     if (((currentT - lastOutput) / 1000) > 0) {
-                        if (printToConsole) {
+                        //if (printToConsole) {
                             cout << setw(4) << int((currentT - startT) / 1000) << "s "
                                  << "visitime " << setw(7) << fixed << setprecision(2) << visitedList.time / 1000 << "s"
                                  << " generated nodes " << setw(9) << allnodes
@@ -280,8 +284,9 @@ namespace progression {
                                  << " size " << setw(9) << visitedList.uniqueInsertions
                                  << " hash fail " << setw(6) << visitedList.subHashCollision
                                  << " hash buckets " << setw(6) << visitedList.attemptedInsertions - visitedList.subHashCollision
+                                 << " fringe size " << setw(6) << fringe.size()
                                  << endl;
-                        }
+                        //}
                         lastOutput = currentT;
                     }
 
@@ -308,16 +313,17 @@ namespace progression {
                 currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
                 cout << "Search Results" << endl;
                 cout << "- Search time " << double(currentT - startT) / 1000 << " seconds" << endl;
+                cout << "- Generated "
+                     << (numSearchNodes + htn->numOneModActions + htn->numOneModMethods + htn->numEffLessProg)
+                     << " search nodes" << endl;
+                cout << "  Calculated heuristic for " << numSearchNodes << " nodes" << endl;
+                cout << "  Processed search nodes: " << counter << " nodes" << endl;
                 cout << "- Visited list time " << visitedList.time / 1000 << " seconds" << endl;
                 cout << "- Visited list inserts " << visitedList.attemptedInsertions << endl;
                 cout << "- Visited list pruned " << visitedList.attemptedInsertions - visitedList.uniqueInsertions << endl;
                 cout << "- Visited list contains " << visitedList.uniqueInsertions << endl;
                 cout << "- Visited list hash collisions " << visitedList.subHashCollision << endl;
                 cout << "- Visited list used hash buckets " << visitedList.attemptedInsertions - visitedList.subHashCollision << endl;
-                cout << "- Generated "
-                     << (numSearchNodes + htn->numOneModActions + htn->numOneModMethods + htn->numEffLessProg)
-                     << " search nodes" << endl;
-                cout << "  Calculated heuristic for " << numSearchNodes << " nodes" << endl;
                 cout << "  One modifications " << (htn->numOneModActions + htn->numOneModMethods) << endl;
                 cout << "  Effectless actions " << htn->numEffLessProg << endl;
                 cout << "- including " << (htn->numOneModActions) << " one modification actions" << endl;

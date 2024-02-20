@@ -36,8 +36,6 @@ PatternSelectionResult createAcyclicPattern(Model* htn) {
                     for (int iFact = 0; iFact < htn->numDels[subtask]; iFact++) {
                         isFactRemoved[htn->delLists[subtask][iFact]] = true;
                     }
-
-                    // Müssen wir die primitiven Aktionen auch entfernen? Eigentlich nicht, da diese nicht zyklisch sind.
                 }
             }
         }
