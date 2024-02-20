@@ -6,6 +6,7 @@
  */
 
 #include "Model.h"
+#include "PrecsEffs.h"
 
 #include <iostream>
 #include <fstream>
@@ -235,6 +236,17 @@ namespace progression {
 
 		delete[] minEstimatedCosts;
 		delete[] minImpliedDistance;
+
+        delete[] poss_eff_positive;
+        delete[] poss_eff_negative;
+        delete[] eff_negative;
+        delete[] eff_positive;
+        delete[] preconditions;
+        delete[] poss_pos_m;
+        delete[] poss_neg_m;
+        delete[] eff_pos_m;
+        delete[] eff_neg_m;
+        delete[] prec_m;
 	}
 
 	void Model::updateTaskCounterA(searchNode *n, searchNode *parent, int action) {
@@ -1987,6 +1999,33 @@ namespace progression {
         if(rintanenInvariants) {
             generateVectorRepresentation();
         }
+
+        // BEGIN: Inference of preconditions and effects of methods
+        if (isTotallyOrdered) {
+            cout << "Calculating preconditions and effects of compound tasks... " << endl;
+            int amount_compound_tasks = 0;
+            for (size_t index = 0; index < this->numTasks; index++) {
+                if (!this->isPrimitive[index]) amount_compound_tasks++;
+            }
+
+            this->poss_eff_positive = new vector<int>[amount_compound_tasks];
+            this->poss_eff_negative = new vector<int>[amount_compound_tasks];
+            this->eff_positive = new vector<int>[amount_compound_tasks];
+            this->eff_negative = new vector<int>[amount_compound_tasks];
+            this->preconditions = new vector<int>[amount_compound_tasks];
+
+            this->poss_pos_m = new vector<int>[this->numMethods];
+            this->poss_neg_m = new vector<int>[this->numMethods];
+            this->eff_pos_m = new vector<int>[this->numMethods];
+            this->eff_neg_m = new vector<int>[this->numMethods];
+            this->prec_m = new vector<int>[this->numMethods];
+
+            computeEffectsAndPreconditions(this, poss_eff_positive, poss_eff_negative, eff_positive, eff_negative, preconditions, amount_compound_tasks);
+            cout << "DONE" << endl;
+        } else {
+            cout << "Preconditions and effects of compound tasks and their methods cannot be calculated because methods are not totally ordered." << endl;
+        }
+        // END: Inference of precs/effs
 
         #if DLEVEL == 5
 		printActions();

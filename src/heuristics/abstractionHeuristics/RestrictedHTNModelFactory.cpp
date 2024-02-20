@@ -75,13 +75,18 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, co
     vector<vector<int>> orderedSubtasks = orderSubTasks(htn);
 
     // Remove marked tasks.
-    /*
     if (patternSelectionResult.numTasksRemoved > 0) {
-        for (vector<int>& subtasks : orderedSubtasks) {
-            std::erase_if(subtasks, [patternSelectionResult](int task) { return patternSelectionResult.isTaskRemoved[task]; });
+        for (int iM = 0; iM < orderedSubtasks.size(); iM++) {
+            int currentTask = htn->decomposedTask[iM];
+
+            if (patternSelectionResult.isTaskRemoved[currentTask]) {
+                int* taskToScc = htn->taskToSCC;
+                std::erase_if(orderedSubtasks[iM], [patternSelectionResult, taskToScc, currentTask](int task) {
+                    return patternSelectionResult.isTaskRemoved[task] && taskToScc[task] == taskToScc[currentTask];
+                });
+            }
         }
     }
-    */
 
     for (int m = 0; m < htn->numMethods; m++) {
         Method method{};

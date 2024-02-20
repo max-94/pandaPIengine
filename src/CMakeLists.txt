@@ -76,7 +76,7 @@ add_custom_command(
 file(GLOB main_SRC "*.h" "*.cpp" "cmdline.c")
  
 # create the executable
-add_executable (pandaPIengine ${main_SRC} "cmdline.c" "cmdline.h")
+add_executable (pandaPIengine ${main_SRC} "cmdline.c" "cmdline.h" PrecsEffs.cpp PrecsEffs.h)
 target_compile_options(pandaPIengine PUBLIC ${compiler_flags})
 target_link_options(pandaPIengine PUBLIC ${linker_flags})
 
