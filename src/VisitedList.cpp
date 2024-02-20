@@ -95,7 +95,7 @@ VisitedList::VisitedList(Model *m, bool _noVisitedCheck, bool _noReOpening, bool
 	this->layers = _layers;
 
 
-	this->hashingP = tenMillionP; 
+	this->hashingP = tenThousandthP;
 	this->stateTable = new hash_table(hashingP);
 	if (!useSequencesMode)
 		this->bitsNeededPerTask = sizeof(int)*8 -  __builtin_clz(m->numTasks - 1);

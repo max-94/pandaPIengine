@@ -2,12 +2,27 @@
 
 namespace progression {
 
-hhVariableRestriction::hhVariableRestriction(Model *htn, int index, vector<int> pattern) : Heuristic(htn, index) {
-    // If no pattern is given, then chose pattern. Otherwise, use given pattern.
-    if (pattern.empty()) {
-        pattern = {0,3,5,7};
+hhVariableRestriction::hhVariableRestriction(Model *htn, int index, patternSelection::PatternSelection mode, vector<int> pattern) : Heuristic(htn, index) {
+    patternSelection::PatternSelectionResult result{};
+
+    if (mode == patternSelection::PatternSelection::STATIC) {
+        result.pattern = std::move(pattern);
+        result.numTasksRemoved = 0;
+        result.isTaskRemoved = vector<bool>(htn->numTasks, false);
+    } else if (mode == patternSelection::PatternSelection::ACYCLIC) {
+        result = patternSelection::createAcyclicPattern(htn);
+    } else {
+        cout << "Unknown mode. Exit." << endl;
+        exit(0);
     }
-    modelFactory = new RestrictedHTNModelFactory(htn, std::move(pattern));
+
+    cout << "Using following pattern = {";
+    for (int p : result.pattern) {
+        cout << " " << p;
+    }
+    cout << " }" << endl;
+
+    modelFactory = new RestrictedHTNModelFactory(htn, result);
 }
 
 hhVariableRestriction::~hhVariableRestriction() {

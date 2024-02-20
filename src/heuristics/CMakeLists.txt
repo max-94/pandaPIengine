@@ -12,6 +12,8 @@ file(GLOB heuristics_SRC "*.h" "*.cpp"
 		"abstractionHeuristics/RestrictedHTNModelFactory.h"
 		"abstractionHeuristics/RestrictedHTNModelUtils.cpp"
 		"abstractionHeuristics/RestrictedHTNModelUtils.h"
+		"abstractionHeuristics/PatternSelection.cpp"
+		"abstractionHeuristics/PatternSelection.h"
 )
 
 add_library(heuristics ${heuristics_SRC})
