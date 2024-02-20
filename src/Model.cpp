@@ -237,16 +237,24 @@ namespace progression {
 		delete[] minEstimatedCosts;
 		delete[] minImpliedDistance;
 
-        delete[] poss_eff_positive;
-        delete[] poss_eff_negative;
-        delete[] eff_negative;
-        delete[] eff_positive;
-        delete[] preconditions;
-        delete[] poss_pos_m;
-        delete[] poss_neg_m;
-        delete[] eff_pos_m;
-        delete[] eff_neg_m;
-        delete[] prec_m;
+        if (this->enabledAbstractEffectsPreconditions) {
+            delete[] poss_eff_positive;
+            delete[] poss_eff_negative;
+            delete[] eff_negative;
+            delete[] eff_positive;
+            delete[] preconditions;
+        }
+
+        if (this->enabledHierarchyReachable) {
+            for (int i = 0; i < this->numTasks; i++) {
+                delete[] this->hierarchyReachableFacts[i];
+                delete[] this->hierarchyReachableTasks[i];
+                delete[] this->hierarchyReachableMethods[i];
+            }
+            delete[] this->hierarchyReachableFacts;
+            delete[] this->hierarchyReachableTasks;
+            delete[] this->hierarchyReachableMethods;
+        }
 	}
 
 	void Model::updateTaskCounterA(searchNode *n, searchNode *parent, int action) {
@@ -2014,18 +2022,28 @@ namespace progression {
             this->eff_negative = new vector<int>[amount_compound_tasks];
             this->preconditions = new vector<int>[amount_compound_tasks];
 
-            this->poss_pos_m = new vector<int>[this->numMethods];
-            this->poss_neg_m = new vector<int>[this->numMethods];
-            this->eff_pos_m = new vector<int>[this->numMethods];
-            this->eff_neg_m = new vector<int>[this->numMethods];
-            this->prec_m = new vector<int>[this->numMethods];
-
             computeEffectsAndPreconditions(this, poss_eff_positive, poss_eff_negative, eff_positive, eff_negative, preconditions, amount_compound_tasks);
+            this->enabledAbstractEffectsPreconditions = true;
             cout << "DONE" << endl;
         } else {
             cout << "Preconditions and effects of compound tasks and their methods cannot be calculated because methods are not totally ordered." << endl;
         }
         // END: Inference of precs/effs
+
+        // BEGIN: Compute hierarchy reachability
+        this->hierarchyReachableFacts = new bool*[this->numTasks];
+        this->hierarchyReachableTasks = new bool*[this->numTasks];
+        this->hierarchyReachableMethods = new bool*[this->numTasks];
+
+        for (int i = 0; i < this->numTasks; i++) {
+            this->hierarchyReachableFacts[i] = new bool[this->numStateBits]{false};
+            this->hierarchyReachableTasks[i] = new bool[this->numTasks]{false};
+            this->hierarchyReachableMethods[i] = new bool[this->numMethods]{false};
+        }
+
+        computeHierarchyReachability(this);
+        this->enabledHierarchyReachable = true;
+        // END: Compute hierarchy reachability
 
         #if DLEVEL == 5
 		printActions();

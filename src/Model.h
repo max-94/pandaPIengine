@@ -265,17 +265,18 @@ namespace progression {
             void printSimple() const;
 
             // guaranteed/possible effects
+            bool enabledAbstractEffectsPreconditions = false;
             vector<int>* poss_eff_positive;
             vector<int>* poss_eff_negative;
             vector<int>* eff_positive;
             vector<int>* eff_negative;
             vector<int>* preconditions;
 
-            vector<int>* poss_pos_m;
-            vector<int>* poss_neg_m;
-            vector<int>* eff_pos_m;
-            vector<int>* eff_neg_m;
-            vector<int>* prec_m;
+            // hierarchy reachability
+            bool enabledHierarchyReachable = false;
+            bool** hierarchyReachableFacts = nullptr;
+            bool** hierarchyReachableTasks = nullptr;
+            bool** hierarchyReachableMethods = nullptr;
     private:
 			bool first = true;
 
