@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 # set(CPLEX_SOURCE_DIR /home/dh/Programme/CPLEX_Studio1210)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set(CMAKE_BUILD_TYPE "Release")
 
 option(SAT "Compile with the SAT planner" OFF)
 option(BDD "Compile with the Symbolic planner" OFF)
@@ -22,7 +23,7 @@ find_program(GENGETOPT gengetopt)
 
 ## required for IBM's CPLEX in order to force it to use newer names for the std headers
 add_definitions(-DIL_STD)
-list(APPEND compiler_flags -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -pedantic "$<$<CONFIG:DEBUG>:-Og;-ggdb3;-lpthread>" "$<$<CONFIG:RELEASE>:-O2;-lpthread>")
+list(APPEND compiler_flags -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -pedantic "$<$<CONFIG:DEBUG>:-ggdb3;-lpthread>" "$<$<CONFIG:RELEASE>:-DNDEBUG;-O2;-lpthread>")
 
 if (CPLEX_SOURCE_DIR)
 	list(APPEND linker_flags "$<$<CONFIG:DEBUG>:-lpthread;-g>" "$<$<CONFIG:RELEASE>:-flto;-lpthread>")
