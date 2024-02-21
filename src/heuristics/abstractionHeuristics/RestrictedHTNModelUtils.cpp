@@ -149,8 +149,8 @@ namespace progression {
         ((hhRC2<hsAddFF>*)heuristics[0])->sasH->heuristic = sasFF;
 
         int aStarWeight = 1;
-        aStar aStarType = gValPathCosts;
-        bool suboptimalSearch = false;
+        aStar aStarType = gValNone;
+        bool suboptimalSearch = true;
         bool noVisitedList = false;
         bool allowGIcheck = true;
         bool taskHash = true;
