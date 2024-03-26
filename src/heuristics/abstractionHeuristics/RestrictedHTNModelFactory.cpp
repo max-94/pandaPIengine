@@ -75,6 +75,7 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, co
     vector<vector<int>> orderedSubtasks = orderSubTasks(htn);
 
     // Remove marked tasks.
+    /*
     if (patternSelectionResult.numTasksRemoved > 0) {
         for (int iM = 0; iM < orderedSubtasks.size(); iM++) {
             int currentTask = htn->decomposedTask[iM];
@@ -87,6 +88,7 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, co
             }
         }
     }
+    */
 
     for (int m = 0; m < htn->numMethods; m++) {
         Method method{};
