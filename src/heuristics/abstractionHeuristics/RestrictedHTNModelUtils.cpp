@@ -151,16 +151,17 @@ namespace progression {
         int aStarWeight = 1;
         aStar aStarType = gValNone;
         bool suboptimalSearch = true;
+
         bool noVisitedList = false;
-        bool allowGIcheck = true;
+        bool allowGICheck = true;
         bool taskHash = true;
         bool taskSequenceHash = true;
         bool topologicalOrdering = true;
         bool orderPairsHash = true;
         bool layerHash = true;
-        bool allowParalleSequencesMode = true;
+        bool allowParallelSequencesMode = true;
 
-        VisitedList visitedList(restrictedModel, noVisitedList, suboptimalSearch, taskHash, taskSequenceHash, topologicalOrdering, orderPairsHash, layerHash, allowGIcheck, allowParalleSequencesMode, false);
+        VisitedList visitedList(restrictedModel, noVisitedList, suboptimalSearch, taskHash, taskSequenceHash, topologicalOrdering, orderPairsHash, layerHash, allowGICheck, allowParallelSequencesMode, false);
         PriorityQueueSearch search;
         OneQueueWAStarFringe fringe(aStarType, aStarWeight, hLength);
 
