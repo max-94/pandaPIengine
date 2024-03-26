@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 # set(CPLEX_SOURCE_DIR /home/dh/Programme/CPLEX_Studio1210)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Release")
 
 option(SAT "Compile with the SAT planner" OFF)
 option(BDD "Compile with the Symbolic planner" OFF)
