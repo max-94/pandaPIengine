@@ -1,5 +1,7 @@
 #include "StateDatabase.h"
 
+#include <utility>
+
 const uint64_t max32BitP = 2147483647ULL;
 const uint64_t over16BitP = 65537ULL;
 const uint64_t tenMillionP = 16777213; // largest prime smaller than 16*1024*1014
@@ -17,9 +19,19 @@ StateDatabase::~StateDatabase() {
     delete this->stateTable;
 }
 
+/*
+void StateDatabase::setFactMapping(vector<int> mapping) {
+    this->factMapping = std::move(mapping);
+}
+*/
+
+void StateDatabase::setTaskMapping(vector<int> mapping) {
+    this->taskMapping = std::move(mapping);
+}
+
 void StateDatabase::to_dfs(planStep *s, vector<int> &seq) {
     assert(s->numSuccessors <= 1);
-    seq.push_back(s->task);
+    seq.push_back(taskMapping[s->task]);
     if (s->numSuccessors == 0) return;
     to_dfs(s->successorList[0], seq);
 }
@@ -93,9 +105,14 @@ uint64_t StateDatabase::taskSequenceHash(vector<int> & tasks){
     return lhash;
 }
 
-uint64_t StateDatabase::computeHash(searchNode *node, vector<bool>& exactBitString) {
+/**
+ * This function does almost the same as the VisitedList::insertVisi().
+ * @param node Processed node that should be saved.
+ * @returns Pointer to the payload. If node does not exist (new node to save), then a nullptr is returned.
+ */
+void** StateDatabase::insertState(searchNode *node) {
     vector<int> sequenceForHashing;
-    exactBitString = node->state;
+    vector<bool> exactBitString = node->state;
 
     // Get task sequence that should be hashed.
     if (node->numPrimitive) to_dfs(node->unconstraintPrimitive[0], sequenceForHashing);
@@ -111,43 +128,6 @@ uint64_t StateDatabase::computeHash(searchNode *node, vector<bool>& exactBitStri
     uint64_t hash = hash_state_sequence(state2Int(node->state).first);
     hash = hash ^ taskCountHash(node);
     hash = hash ^ taskSequenceHash(sequenceForHashing);
-
-    return hash;
-}
-
-/*
-int StateDatabase::getValue(searchNode *node) {
-    vector<bool> exactBitString;
-    uint64_t hash = computeHash(node, exactBitString);
-
-    // state access
-    auto [accessVector,padding] = state2Int(exactBitString);
-
-
-    auto stateEntry = (compressed_sequence_trie**) this->stateTable->get(hash);
-    void** payload;
-    if (!*stateEntry) {
-        *stateEntry = new compressed_sequence_trie(accessVector,padding,payload);
-    } else {
-        (*stateEntry)->insert(accessVector,padding,payload);
-    }
-
-    if (*bucket == nullptr) {
-        return -1;
-    } else {
-        return (**bucket)[0];
-    }
-}
- */
-
-/**
- * This function does almost the same as the VisitedList::insertVisi().
- * @param node Processed node that should be saved.
- * @returns Pointer to the payload. If node does not exist (new node to save), then a nullptr is returned.
- */
-void** StateDatabase::insertState(searchNode *node) {
-    vector<bool> exactBitString;
-    uint64_t hash = computeHash(node, exactBitString);
 
     // state access
     auto [accessVector,padding] = state2Int(exactBitString);

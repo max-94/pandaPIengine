@@ -16,19 +16,23 @@ namespace progression {
         explicit StateDatabase(Model* model);
         ~StateDatabase();
 
+        //void setFactMapping(vector<int> mapping);
+        void setTaskMapping(vector<int> mapping);
+
         void** insertState(searchNode* node);
     private:
         Model* htn;
         hash_table* stateTable;
         int bitsNeededPerTask;
 
+        vector<int> factMapping;
+        vector<int> taskMapping;
+
         void to_dfs(planStep *s, vector<int> &seq);
         uint64_t hash_state_sequence(const vector<uint64_t> & state);
         pair<vector<uint64_t>, int> state2Int(vector<bool> &state);
         uint64_t taskCountHash(searchNode * n);
         uint64_t taskSequenceHash(vector<int> & tasks);
-
-        uint64_t computeHash(searchNode* node, vector<bool>& exactBitString);
     };
 }
 

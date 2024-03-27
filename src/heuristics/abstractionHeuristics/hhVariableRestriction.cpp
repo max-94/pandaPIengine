@@ -26,6 +26,8 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index, patternSelec
     // Required property instantiations.
     modelFactory = new RestrictedHTNModelFactory(htn, result);
     secondarySearchStateDatabase = new StateDatabase(htn);
+    //vector<int> factMapping = modelFactory->getFactMappingRestrictedToOriginal();
+    //secondarySearchStateDatabase->setFactMapping(factMapping);
 }
 
 hhVariableRestriction::~hhVariableRestriction() {
@@ -45,9 +47,9 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int absTask, int method) {
     // Create restricted model based on current search node.
-    Model* restrictedModel = modelFactory->getRestrictedHTNModel(n, false);
-    vector<int> factMapping = modelFactory->getFactMappingRestrictedToOriginal();
+    Model* restrictedModel = modelFactory->getRestrictedHTNModel(n, true);
     vector<int> taskMapping = modelFactory->computeTaskMappingRestrictedToOriginal();
+    secondarySearchStateDatabase->setTaskMapping(taskMapping);
 
     // Prepare initial search node from restricted model.
     auto restrictedRootSearchNode = restrictedModel->prepareTNi(restrictedModel);
@@ -57,6 +59,25 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
 
     // Call search procedure to solve restricted model providing heuristic value.
     int hValue = solveRestrictedModel(restrictedModel, restrictedRootSearchNode);
+
+    // TODO: Code to test storing and retrieving.
+    auto restrictedRootSearchNode2 = restrictedModel->prepareTNi(restrictedModel);
+    void** v = secondarySearchStateDatabase->insertState(restrictedRootSearchNode2);
+    if (*v == nullptr) {
+        cout << "New entry" << endl;
+        *v = (void*) hValue;
+    } else {
+        cout << "Found entry" << *(int*)v << endl;
+    }
+
+    void** v2 = secondarySearchStateDatabase->insertState(restrictedRootSearchNode2);
+    if (*v2 == nullptr) {
+        cout << "New entry" << endl;
+    } else {
+        cout << "Found entry: " << *(int*)v2 << endl;
+    }
+    cout << "-------------" << endl;
+    // TODO: End test code.
 
     n->heuristicValue[index] = hValue;
     n->goalReachable = hValue != UNREACHABLE;
