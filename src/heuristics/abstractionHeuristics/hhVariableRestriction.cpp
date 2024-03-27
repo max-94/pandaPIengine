@@ -23,10 +23,12 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index, patternSelec
     cout << " }" << endl;
 
     modelFactory = new RestrictedHTNModelFactory(htn, result);
+    secondarySearchStateDatabase = new StateDatabase(htn);
 }
 
 hhVariableRestriction::~hhVariableRestriction() {
     delete modelFactory;
+    delete secondarySearchStateDatabase;
 }
 
 string hhVariableRestriction::getDescription() {

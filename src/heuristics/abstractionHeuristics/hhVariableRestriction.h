@@ -7,6 +7,7 @@
 #include "Heuristic.h"
 #include "RestrictedHTNModelFactory.h"
 #include "PatternSelection.h"
+#include "StateDatabase.h"
 
 namespace progression {
 
@@ -20,6 +21,7 @@ public:
 
 private:
     RestrictedHTNModelFactory* modelFactory;
+    StateDatabase* secondarySearchStateDatabase;
 };
 
 } /* namespace progression */

@@ -7,14 +7,24 @@ const uint64_t oneMillionP = 1048573; // largest prime smaller than 1024*1014
 const uint64_t tenThousandP = 16381; // largest prime smaller than 1024*16
 const uint64_t tenThousandthP = 104729; // the 10.000th prime number
 
-void to_dfs(planStep *s, vector<int> &seq) {
+StateDatabase::StateDatabase(progression::Model *model) {
+    this->htn = model;
+    this->stateTable = new hash_table(104729);
+    this->bitsNeededPerTask = sizeof(int)*8 -  __builtin_clz(model->numTasks);
+}
+
+StateDatabase::~StateDatabase() {
+    delete this->stateTable;
+}
+
+void StateDatabase::to_dfs(planStep *s, vector<int> &seq) {
     assert(s->numSuccessors <= 1);
     seq.push_back(s->task);
     if (s->numSuccessors == 0) return;
     to_dfs(s->successorList[0], seq);
 }
 
-uint64_t hash_state_sequence(const vector<uint64_t> & state){
+uint64_t StateDatabase::hash_state_sequence(const vector<uint64_t> & state) {
     uint64_t ret = 0;
 
     for (uint64_t x : state){
@@ -27,16 +37,6 @@ uint64_t hash_state_sequence(const vector<uint64_t> & state){
     }
 
     return ret;
-}
-
-StateDatabase::StateDatabase(progression::Model *model) {
-    this->htn = model;
-    this->stateTable = new hash_table(104729);
-    this->bitsNeededPerTask = sizeof(int)*8 -  __builtin_clz(model->numTasks);
-}
-
-StateDatabase::~StateDatabase() {
-    delete this->stateTable;
 }
 
 pair<vector<uint64_t>, int> StateDatabase::state2Int(vector<bool> &state) {
@@ -93,9 +93,44 @@ uint64_t StateDatabase::taskSequenceHash(vector<int> & tasks){
     return lhash;
 }
 
+uint64_t StateDatabase::computeHash(searchNode *node, vector<bool>& exactBitString) {
+    vector<int> sequenceForHashing;
+    exactBitString = node->state;
+
+    // Get task sequence that should be hashed.
+    if (node->numPrimitive) to_dfs(node->unconstraintPrimitive[0], sequenceForHashing);
+    if (node->numAbstract) to_dfs(node->unconstraintAbstract[0], sequenceForHashing);
+
+    for (int task : sequenceForHashing) {
+        for (int bit = 0; bit < bitsNeededPerTask; bit++) {
+            exactBitString.push_back(task & (1 << bit));
+        }
+    }
+
+    // Compute hash value.
+    uint64_t hash = hash_state_sequence(state2Int(node->state).first);
+    hash = hash ^ taskCountHash(node);
+    hash = hash ^ taskSequenceHash(sequenceForHashing);
+
+    return hash;
+}
+
+/*
 int StateDatabase::getValue(searchNode *node) {
-    uint64_t hash = computeHash(node);
-    auto bucket = (vector<int>**) this->stateTable->get(hash);
+    vector<bool> exactBitString;
+    uint64_t hash = computeHash(node, exactBitString);
+
+    // state access
+    auto [accessVector,padding] = state2Int(exactBitString);
+
+
+    auto stateEntry = (compressed_sequence_trie**) this->stateTable->get(hash);
+    void** payload;
+    if (!*stateEntry) {
+        *stateEntry = new compressed_sequence_trie(accessVector,padding,payload);
+    } else {
+        (*stateEntry)->insert(accessVector,padding,payload);
+    }
 
     if (*bucket == nullptr) {
         return -1;
@@ -103,35 +138,27 @@ int StateDatabase::getValue(searchNode *node) {
         return (**bucket)[0];
     }
 }
-
-uint64_t StateDatabase::computeHash(searchNode *node) {
-    vector<int> sequenceForHashing;
-
-    // Get task sequence that should be hashed.
-    if (node->numPrimitive) to_dfs(node->unconstraintPrimitive[0], sequenceForHashing);
-    if (node->numAbstract) to_dfs(node->unconstraintAbstract[0], sequenceForHashing);
-
-    // Compute hash value.
-    uint64_t hash = hash_state_sequence(state2Int(node->state).first);
-    hash = hash ^ taskCountHash(node);
-    hash = hash ^ taskSequenceHash(sequenceForHashing);
-    
-    return hash;
-}
+ */
 
 /**
  * This function does almost the same as the VisitedList::insertVisi().
- * @param node
+ * @param node Processed node that should be saved.
+ * @returns Pointer to the payload. If node does not exist (new node to save), then a nullptr is returned.
  */
-void StateDatabase::insertState(searchNode *node, int hValue) {
-    uint64_t hash = computeHash(node);
+void** StateDatabase::insertState(searchNode *node) {
+    vector<bool> exactBitString;
+    uint64_t hash = computeHash(node, exactBitString);
 
-    // TODO: Handle collision. Use some other hash?
-    auto bucket = (vector<int>**) stateTable->get(hash);
-    if (*bucket == nullptr) {
-        *bucket = new vector<int>(hValue);
+    // state access
+    auto [accessVector,padding] = state2Int(exactBitString);
+
+    auto stateEntry = (compressed_sequence_trie**) this->stateTable->get(hash);
+    void** payload;
+    if (!*stateEntry) {
+        *stateEntry = new compressed_sequence_trie(accessVector,padding,payload);
     } else {
-        cout << "COLLISION!!" << endl;
-        (*bucket)->push_back(hValue);
+        (*stateEntry)->insert(accessVector,padding,payload);
     }
+
+    return payload;
 }
