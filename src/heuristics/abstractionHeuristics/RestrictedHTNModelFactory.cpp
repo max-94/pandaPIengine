@@ -17,6 +17,13 @@ RestrictedHTNModelFactory::RestrictedHTNModelFactory(progression::Model *htn, co
         factMapping[pattern[f]] = fact;
     }
 
+    // Compute reversed mapping: restricted fact id to original fact id
+    factMappingRestrictedToOriginal.clear();
+    factMappingRestrictedToOriginal.resize(factMapping.size());
+    for (pair<int, Fact> f : factMapping) {
+        this->factMappingRestrictedToOriginal[f.second.id] = f.first;
+    }
+
     // Process goal
     goal = extractFacts(htn->gSize, htn->gList);
 
@@ -175,7 +182,7 @@ Model *RestrictedHTNModelFactory::getRestrictedHTNModel(progression::searchNode 
     model->numDels = new int[numActions];
     model->delLists = new int*[numActions];
 
-    map<int, int> taskMapping{}; // Mapping original index to restricted index.
+    taskMapping.clear(); // Mapping original index to restricted index.
     int taskCounter = 0;
     for (const Task& task : tasks) {
         if (!taskReachable[task.id]) continue;
@@ -340,4 +347,18 @@ vector<bool> RestrictedHTNModelFactory::computeTaskReachability(const vector<int
     }
 
     return taskReachable;
+}
+
+vector<int> RestrictedHTNModelFactory::getFactMappingRestrictedToOriginal() {
+    return factMappingRestrictedToOriginal;
+}
+
+vector<int> RestrictedHTNModelFactory::computeTaskMappingRestrictedToOriginal() {
+    vector<int> mapping(taskMapping.size());
+
+    for (pair<int, int> m : taskMapping) {
+        mapping[m.second] = m.first;
+    }
+
+    return mapping;
 }

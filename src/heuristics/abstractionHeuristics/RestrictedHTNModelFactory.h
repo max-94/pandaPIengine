@@ -50,13 +50,18 @@ public:
     ~RestrictedHTNModelFactory() = default;
 
     Model* getRestrictedHTNModel(progression::searchNode *n, bool printModel = false);
+    vector<int> getFactMappingRestrictedToOriginal();
+    vector<int> computeTaskMappingRestrictedToOriginal();
 private:
     vector<int> pattern;
 
     // Properties to store basic information of original HTN model.
     int initialTask;
-    map<int, Fact> factMapping;
-    map<int, Variable> variableMapping;
+    map<int, Fact> factMapping;         // Mapping origin fact id to restricted fact.
+    map<int, Variable> variableMapping; // Mapping origin variable id to restricted variable.
+    map<int, int> taskMapping;          // Mapping origin task id to restricted task id. This changes with each search node!
+
+    vector<int> factMappingRestrictedToOriginal;
 
     vector<Action> actions;
     vector<Task> tasks;

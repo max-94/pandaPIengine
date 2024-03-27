@@ -3,8 +3,8 @@
 namespace progression {
 
 hhVariableRestriction::hhVariableRestriction(Model *htn, int index, patternSelection::PatternSelection mode, vector<int> pattern) : Heuristic(htn, index) {
+    // Automatically compute pattern that should be used.
     patternSelection::PatternSelectionResult result{};
-
     if (mode == patternSelection::PatternSelection::STATIC) {
         result.pattern = std::move(pattern);
         result.numTasksRemoved = 0;
@@ -16,12 +16,14 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index, patternSelec
         exit(0);
     }
 
+    // Generate output to show what pattern will be used.
     cout << "Using following pattern = {";
     for (int p : result.pattern) {
         cout << " " << p;
     }
     cout << " }" << endl;
 
+    // Required property instantiations.
     modelFactory = new RestrictedHTNModelFactory(htn, result);
     secondarySearchStateDatabase = new StateDatabase(htn);
 }
@@ -36,17 +38,24 @@ string hhVariableRestriction::getDescription() {
 }
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int action) {
+    // Just call other function. I don't know when this function is actually called. I have never seen this function
+    // getting called.
     setHeuristicValue(n, parent, 0, 0);
 }
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int absTask, int method) {
+    // Create restricted model based on current search node.
     Model* restrictedModel = modelFactory->getRestrictedHTNModel(n, false);
-    auto restrictedRootSearchNode = restrictedModel->prepareTNi(restrictedModel);
+    vector<int> factMapping = modelFactory->getFactMappingRestrictedToOriginal();
+    vector<int> taskMapping = modelFactory->computeTaskMappingRestrictedToOriginal();
 
+    // Prepare initial search node from restricted model.
+    auto restrictedRootSearchNode = restrictedModel->prepareTNi(restrictedModel);
     restrictedModel->calcSCCs(false);
     restrictedModel->calcSCCGraph(false);
     restrictedModel->updateReachability(restrictedRootSearchNode);
 
+    // Call search procedure to solve restricted model providing heuristic value.
     int hValue = solveRestrictedModel(restrictedModel, restrictedRootSearchNode);
 
     n->heuristicValue[index] = hValue;
