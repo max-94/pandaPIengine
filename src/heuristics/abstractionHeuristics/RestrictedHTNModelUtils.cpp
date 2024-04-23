@@ -142,10 +142,10 @@ namespace progression {
         }
     }
 
-    int solveRestrictedModel(Model* restrictedModel, searchNode* tni) {
+    int solveRestrictedModel(Model* restrictedModel, searchNode* tni, StateDatabase* db) {
         int hLength = 1;
         auto heuristics = new Heuristic*[hLength];
-        heuristics[0] = new hhRC2<hsAddFF>(restrictedModel, 0, estDISTANCE, true);
+        heuristics[0] = new hhRC2<hsAddFF>(restrictedModel, 0, estDISTANCE, true, db);
         ((hhRC2<hsAddFF>*)heuristics[0])->sasH->heuristic = sasFF;
 
         int aStarWeight = 1;

@@ -17,6 +17,7 @@
 #include "hsLmCut.h"
 #include "hsFilter.h"
 #include "RCModelFactory.h"
+#include "abstractionHeuristics/StateDatabase.h"
 
 enum eEstimate {
     estDISTANCE, estMIXED, estCOSTS
@@ -36,14 +37,14 @@ private:
 
     bool useAdmissibleCostEstimate = false;
 
+    StateDatabase* db;
+
 public:
     ClassicalHeuristic *sasH;
     list<LMCutLandmark *>* cuts = new list<LMCutLandmark *>();
-	
-    hhRC2(Model *htnModel, int index, eEstimate estimate, bool correctTaskCount) : Heuristic(htnModel, index),
-                                                                                   estimate(estimate),
-                                                                                   correctTaskCount(correctTaskCount) {
-
+    hhRC2(Model *htnModel, int index, eEstimate estimate, bool correctTaskCount, StateDatabase* db = nullptr):
+        Heuristic(htnModel, index), estimate(estimate), correctTaskCount(correctTaskCount), db(db)
+    {
         Model *heuristicModel;
         factory = new RCModelFactory(htnModel);
 		// two weird things:
@@ -125,6 +126,17 @@ public:
 
     int setHeuristicValue(searchNode *n) {
         int hval = 0;
+
+        // First check state database if given node was already computed. If yes, return previously computed value.
+        // Otherwise, compute hValue and store it in state database.
+        void** dbPayload = nullptr;
+        if (db != nullptr) {
+            dbPayload = db->insertState(n);
+            if (*dbPayload != nullptr) {
+                //cout << "Found entry: " << *(int*)dbPayload << endl;
+                return *(int*)dbPayload;
+            }
+        }
 
         // get facts holding in s0
         s0set.clear();
@@ -241,6 +253,10 @@ public:
                     }
                 }
             }
+        }
+
+        if (dbPayload != nullptr) {
+            *dbPayload = (void*) hval;
         }
         return hval;
     }

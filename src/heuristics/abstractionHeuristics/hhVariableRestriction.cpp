@@ -47,7 +47,7 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
 
 void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progression::searchNode *parent, int absTask, int method) {
     // Create restricted model based on current search node.
-    Model* restrictedModel = modelFactory->getRestrictedHTNModel(n, true);
+    Model* restrictedModel = modelFactory->getRestrictedHTNModel(n, false);
     vector<int> taskMapping = modelFactory->computeTaskMappingRestrictedToOriginal();
     secondarySearchStateDatabase->setTaskMapping(taskMapping);
 
@@ -58,25 +58,27 @@ void hhVariableRestriction::setHeuristicValue(progression::searchNode *n, progre
     restrictedModel->updateReachability(restrictedRootSearchNode);
 
     // Call search procedure to solve restricted model providing heuristic value.
-    int hValue = solveRestrictedModel(restrictedModel, restrictedRootSearchNode);
+    int hValue = solveRestrictedModel(restrictedModel, restrictedRootSearchNode, secondarySearchStateDatabase);
 
+    // TODO: Wie erstelle ich einen abstrakten Knoten für die PDB???
     // TODO: Code to test storing and retrieving.
-    auto restrictedRootSearchNode2 = restrictedModel->prepareTNi(restrictedModel);
-    void** v = secondarySearchStateDatabase->insertState(restrictedRootSearchNode2);
+    /*
+    void** v = secondarySearchStateDatabase->insertState(n);
     if (*v == nullptr) {
         cout << "New entry" << endl;
         *v = (void*) hValue;
     } else {
-        cout << "Found entry" << *(int*)v << endl;
+        cout << "Found entry: " << *(int*)v << endl;
     }
 
-    void** v2 = secondarySearchStateDatabase->insertState(restrictedRootSearchNode2);
+    void** v2 = secondarySearchStateDatabase->insertState(n);
     if (*v2 == nullptr) {
         cout << "New entry" << endl;
     } else {
         cout << "Found entry: " << *(int*)v2 << endl;
     }
     cout << "-------------" << endl;
+    */
     // TODO: End test code.
 
     n->heuristicValue[index] = hValue;
