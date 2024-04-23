@@ -5,6 +5,10 @@ namespace progression {
 hhVariableRestriction::hhVariableRestriction(Model *htn, int index, patternSelection::PatternSelection mode, vector<int> pattern) : Heuristic(htn, index) {
     // Automatically compute pattern that should be used.
     patternSelection::PatternSelectionResult result{};
+    timeval tp;
+    gettimeofday(&tp, NULL);
+    long startT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+
     if (mode == patternSelection::PatternSelection::STATIC) {
         result.pattern = std::move(pattern);
         result.numTasksRemoved = 0;
@@ -15,6 +19,10 @@ hhVariableRestriction::hhVariableRestriction(Model *htn, int index, patternSelec
         cout << "Unknown mode. Exit." << endl;
         exit(0);
     }
+
+    gettimeofday(&tp, NULL);
+    long endT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+    cout << "Pattern calculation took " << double(endT - startT) / 1000 << " seconds" << endl;
 
     // Generate output to show what pattern will be used.
     cout << "Using following pattern = {";

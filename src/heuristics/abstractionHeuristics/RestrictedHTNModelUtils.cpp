@@ -160,12 +160,13 @@ namespace progression {
         bool orderPairsHash = true;
         bool layerHash = true;
         bool allowParallelSequencesMode = true;
+        int timeLimit = 600;
 
         VisitedList visitedList(restrictedModel, noVisitedList, suboptimalSearch, taskHash, taskSequenceHash, topologicalOrdering, orderPairsHash, layerHash, allowGICheck, allowParallelSequencesMode, false);
         PriorityQueueSearch search;
         OneQueueWAStarFringe fringe(aStarType, aStarWeight, hLength);
 
-        int solutionCosts = search.search(restrictedModel, tni, 1800, suboptimalSearch, false, heuristics, hLength, visitedList, fringe, false, false);
+        int solutionCosts = search.search(restrictedModel, tni, timeLimit, suboptimalSearch, false, heuristics, hLength, visitedList, fringe, false, false);
         delete[] heuristics;
         return solutionCosts;
     }
