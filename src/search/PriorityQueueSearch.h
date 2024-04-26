@@ -175,6 +175,14 @@ namespace progression {
                     }
 
                     for (int i = 0; i < htn->numMethodsForTask[task]; i++) {
+
+                        gettimeofday(&tp, NULL);
+                        currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+                        if ((timeLimit > 0) && ((currentT - startT) / 1000 > timeLimit)) {
+                            reachedTimeLimit = true;
+                            break;
+                        }
+
                         int method = htn->taskToMethods[task][i];
                         if (printTrace) {
                             cout << "Processing method " << method << endl;
@@ -263,8 +271,16 @@ namespace progression {
                     }
                 }
 
-                int allnodes = numSearchNodes + htn->numOneModActions + htn->numOneModMethods + htn->numEffLessProg;
+                gettimeofday(&tp, NULL);
+                currentT = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+                if ((timeLimit > 0) && ((currentT - startT) / 1000 > timeLimit)) {
+                    reachedTimeLimit = true;
+                    cout << "Reached time limit - stopping search." << endl;
+                    break;
+                }
 
+                /*
+                int allnodes = numSearchNodes + htn->numOneModActions + htn->numOneModMethods + htn->numEffLessProg;
                 if (allnodes - lastCheck >= checkAfter) {
                     lastCheck = allnodes;
 
@@ -289,13 +305,8 @@ namespace progression {
                         //}
                         lastOutput = currentT;
                     }
-
-                    if ((timeLimit > 0) && ((currentT - startT) / 1000 > timeLimit)) {
-                        reachedTimeLimit = true;
-                        cout << "Reached time limit - stopping search." << endl;
-                        break;
-                    }
                 }
+                */
 
                 if (visitedList.canDeleteProcessedNodes)
                     delete n;
